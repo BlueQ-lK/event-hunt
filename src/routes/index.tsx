@@ -1,51 +1,71 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { HeroSection } from '@/components/landing-page/HeroSection'
 import { TrendingEventsSection } from '@/components/landing-page/TrendingEventsSection'
+import { UpcomingEventsSection } from '@/components/landing-page/UpcomingEventsSection'
 import { CategoriesSection } from '@/components/landing-page/CategoriesSection'
-import { FeaturedHubsSection } from '@/components/landing-page/FeaturedHubsSection'
+import { AllEventsSection } from '@/components/landing-page/AllEventsSection'
 import { FrictionlessFlowSection } from '@/components/landing-page/FrictionlessFlowSection'
+import { getTrendingEvents, getUpcomingEvents, getAllEvents } from '@/server/events'
 
-export const Route = createFileRoute('/')({ component: Home })
+export const Route = createFileRoute('/')({
+  loader: async () => {
+    const [trendingEvents, upcomingEvents, allEvents] = await Promise.all([
+      getTrendingEvents(),
+      getUpcomingEvents(),
+      getAllEvents(),
+    ])
+    return { trendingEvents, upcomingEvents, allEvents }
+  },
+  component: Home,
+})
 
 function Home() {
+  const { trendingEvents, upcomingEvents, allEvents } = Route.useLoaderData()
+
   return (
-    <>
+    <div className="min-h-screen">
       <HeroSection />
-      <TrendingEventsSection />
-      <CategoriesSection />
-      <FrictionlessFlowSection />
-      <FeaturedHubsSection />
-      
-      {/* Swiss Style Footer */}
-      <footer className="py-20 px-6 md:px-20 bg-background border-t border-border">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-16">
-          <div className="md:col-span-2">
-            <h2 className="text-4xl font-black uppercase tracking-tighter mb-8 italic">EventHunt.</h2>
-            <p className="text-muted-foreground max-w-sm font-medium">
-              A decentralized-inspired event protocol. Built for discovery, optimized for community hubs.
-            </p>
+
+      <TrendingEventsSection events={trendingEvents} />
+
+      <UpcomingEventsSection events={upcomingEvents} />
+
+      <div className="container-custom pb-16">
+        <div className="flex flex-col lg:flex-row gap-8">
+          <div className="lg:w-[380px]">
+            <CategoriesSection />
           </div>
-          <div className="flex flex-col gap-4 font-mono text-[10px] uppercase tracking-widest">
-            <span className="text-foreground font-bold mb-4">Navigation</span>
-            <a href="#" className="hover:text-primary transition-colors">/ PROTOCOL_EXPLORER</a>
-            <a href="#" className="hover:text-primary transition-colors">/ HUB_INDEX</a>
-            <a href="#" className="hover:text-primary transition-colors">/ NETWORK_STATUS</a>
-          </div>
-          <div className="flex flex-col gap-4 font-mono text-[10px] uppercase tracking-widest">
-            <span className="text-foreground font-bold mb-4">Legal</span>
-            <a href="#" className="hover:text-primary transition-colors">/ TERMS_OF_SYNC</a>
-            <a href="#" className="hover:text-primary transition-colors">/ PRIVACY_PROTOCOL</a>
-            <a href="#" className="hover:text-primary transition-colors">/ LICENSE_v3.0</a>
+          <div className="flex-1">
+            <AllEventsSection events={allEvents} />
           </div>
         </div>
-        <div className="max-w-7xl mx-auto mt-20 pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4 font-mono text-[9px] uppercase tracking-[0.4em] text-muted-foreground">
-          <span>&copy; 2026 EVENTHUNT_CORP</span>
-          <div className="flex gap-8">
-            <span>UPTIME: 99.98%</span>
-            <span>BUILD: v2.0.4-STABLE</span>
-          </div>
+      </div>
+
+      <FrictionlessFlowSection />
+
+      <footer className="py-10 border-t border-slate-100 bg-white">
+        <div className="container-custom flex flex-col md:flex-row items-center justify-between gap-6">
+           <div className="flex flex-col gap-2">
+             <div className="flex items-center gap-2">
+               <div className="w-6 h-6 bg-primary rounded flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-white fill-current">
+                    <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z" />
+                  </svg>
+               </div>
+               <span className="text-lg font-bold text-slate-800">EventHunt</span>
+             </div>
+             <p className="text-xs text-slate-400">© 2024 EventHunt. Curating the world's finest festivals.</p>
+           </div>
+
+           <div className="flex gap-8 text-xs font-bold text-slate-500">
+             <a href="#" className="hover:text-primary transition-colors">About Hubs</a>
+             <a href="#" className="hover:text-primary transition-colors">Safety Guidelines</a>
+             <a href="#" className="hover:text-primary transition-colors">Event Hosting</a>
+             <a href="#" className="hover:text-primary transition-colors">Privacy</a>
+             <a href="#" className="hover:text-primary transition-colors">Terms</a>
+           </div>
         </div>
       </footer>
-    </>
+    </div>
   )
 }

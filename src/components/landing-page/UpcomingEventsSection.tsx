@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { ChevronRight, Flame } from 'lucide-react'
+import { ChevronRight, CalendarClock } from 'lucide-react'
 import { EventCard } from '@/components/EventCard'
 
 type Event = {
@@ -17,23 +17,22 @@ type Event = {
   bannerImage: string | null
   brochure: string | null
   createdAt: Date
-  interestCount?: number
 }
 
-export function TrendingEventsSection({ events }: { events: Event[] }) {
+export function UpcomingEventsSection({ events }: { events: Event[] }) {
   if (events.length === 0) {
     return null
   }
 
   return (
-    <section className="py-16">
+    <section className="py-16 bg-slate-50">
       <div className="container-custom">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-2">
-            <Flame className="w-6 h-6 text-primary" />
+            <CalendarClock className="w-6 h-6 text-primary" />
             <div>
-              <h2 className="text-2xl font-bold text-slate-800">Trending Events</h2>
-              <p className="text-xs text-slate-400 font-medium">Ongoing events most people are interested in this week</p>
+              <h2 className="text-2xl font-bold text-slate-800">Upcoming Events</h2>
+              <p className="text-xs text-slate-400 font-medium">Don't miss what's coming up next</p>
             </div>
           </div>
           <Link to="/search" className="flex items-center gap-1 text-primary text-sm font-bold hover:gap-2 transition-all">
@@ -42,18 +41,18 @@ export function TrendingEventsSection({ events }: { events: Event[] }) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {events.map((event) => (
-            <div key={event.id} className="relative">
-              {event.interestCount != null && event.interestCount > 0 && (
-                <div className="absolute -top-2 -right-2 z-10 bg-primary text-white text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 shadow-md">
-                  <Flame className="w-3 h-3" />
-                  {event.interestCount}
-                </div>
-              )}
-              <EventCard event={event} />
-            </div>
+          {events.slice(0, 4).map((event) => (
+            <EventCard key={event.id} event={event} />
           ))}
         </div>
+
+        {events.length > 4 && (
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {events.slice(4, 8).map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )

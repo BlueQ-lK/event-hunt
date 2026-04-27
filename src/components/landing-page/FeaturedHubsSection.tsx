@@ -1,77 +1,79 @@
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { hubs } from '@/lib/dummy-data'
-import { Building2, Globe, Lock, ArrowUpRight } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
+import { ChevronRight, ChevronLeft } from 'lucide-react'
+
+const hubs = [
+  {
+    id: '1',
+    name: 'Yennahole Temple',
+    location: 'Yennahole, Karnataka',
+    eventCount: '156 Events',
+    image: 'https://images.unsplash.com/photo-1590050752117-23a9d7f28243?q=80&w=600&auto=format&fit=crop'
+  },
+  {
+    id: '2',
+    name: 'Kateel Shri Durgaparameshwari',
+    location: 'Kateel, Karnataka',
+    eventCount: '98 Events',
+    image: 'https://images.unsplash.com/photo-1605152276897-4f618f831968?q=80&w=600&auto=format&fit=crop'
+  },
+  {
+    id: '3',
+    name: 'Udupi Krishna Matha',
+    location: 'Udupi, Karnataka',
+    eventCount: '87 Events',
+    image: 'https://images.unsplash.com/photo-1531058020387-3be344556be6?q=80&w=600&auto=format&fit=crop'
+  },
+  {
+    id: '4',
+    name: 'Kollur Mookambika Temple',
+    location: 'Kollur, Karnataka',
+    eventCount: '75 Events',
+    image: 'https://images.unsplash.com/photo-1533900298318-6b8da08a523e?q=80&w=600&auto=format&fit=crop'
+  }
+]
 
 export function FeaturedHubsSection() {
   return (
-    <section className="py-24 px-6 md:px-20 bg-background">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col lg:flex-row gap-16 mb-20">
-          <div className="lg:w-1/2">
-            <h2 className="text-5xl md:text-8xl font-black uppercase tracking-tighter text-foreground leading-[0.85] mb-8">
-              Festival<br />
-              <span className="text-primary italic">Hubs.</span>
-            </h2>
-            <p className="text-xl md:text-2xl text-muted-foreground font-medium leading-tight">
-              The primary nodes of our ecosystem. Verified organizers managing cultural legacies and modern gatherings.
-            </p>
+    <div className="bg-white rounded-2xl p-8 border border-slate-100 shadow-sm flex-1">
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-2">
+          <div className="text-primary">
+            <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+              <path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z" />
+            </svg>
           </div>
-          <div className="lg:w-1/2 flex items-end justify-start lg:justify-end">
-            <div className="flex flex-col gap-4 border-l-2 border-primary pl-8 py-4">
-              <span className="font-mono text-xs uppercase tracking-widest text-muted-foreground">Network Stats</span>
-              <div className="flex gap-12">
-                <div>
-                  <div className="text-4xl font-black mb-1">128+</div>
-                  <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">ACTIVE HUBS</div>
-                </div>
-                <div>
-                  <div className="text-4xl font-black mb-1">4.2K</div>
-                  <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">VERIFIED ORGANIZERS</div>
-                </div>
+          <h2 className="text-xl font-bold text-slate-800">Popular Festival Hubs</h2>
+        </div>
+        <Link to="/search" className="flex items-center gap-1 text-primary text-xs font-bold hover:gap-2 transition-all">
+          View all hubs <ChevronRight className="w-3 h-3" />
+        </Link>
+      </div>
+
+      <div className="relative">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {hubs.map((hub) => (
+            <div key={hub.id} className="group cursor-pointer">
+              <div className="aspect-[4/3] rounded-xl overflow-hidden mb-3">
+                <img 
+                  src={hub.image} 
+                  alt={hub.name} 
+                  className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                />
+              </div>
+              <h4 className="text-sm font-bold text-slate-800 truncate group-hover:text-primary transition-colors">{hub.name}</h4>
+              <div className="flex items-center justify-between mt-1">
+                <p className="text-[10px] text-slate-500 truncate">{hub.location}</p>
+                <span className="text-[10px] font-bold text-primary">{hub.eventCount}</span>
               </div>
             </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {hubs.map((hub) => (
-            <Card key={hub.id} className="group bg-card border border-border rounded-[3rem] overflow-hidden hover:border-primary transition-all duration-500">
-              <CardContent className="p-0">
-                <div className="relative h-48 overflow-hidden">
-                  <img 
-                    src={hub.imageUrl} 
-                    alt={hub.name} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-80"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
-                  <div className="absolute top-6 right-6">
-                    <Badge className="bg-white/10 backdrop-blur-md border border-white/20 text-white font-mono text-[10px] uppercase tracking-widest px-3 py-1">
-                      {hub.visibility}
-                    </Badge>
-                  </div>
-                </div>
-                <div className="p-10 -mt-10 relative bg-card rounded-t-[3rem]">
-                  <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-primary mb-4">
-                    <Building2 className="w-3.5 h-3.5" />
-                    {hub.type}
-                  </div>
-                  <h3 className="text-3xl font-black uppercase tracking-tighter mb-4 leading-none">{hub.name}</h3>
-                  <p className="text-muted-foreground text-sm font-medium leading-relaxed mb-8 line-clamp-2">
-                    {hub.description}
-                  </p>
-                  <div className="flex items-center justify-between border-t border-border pt-8">
-                     <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{hub.location}</span>
-                     <button className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
-                        <ArrowUpRight className="w-5 h-5" />
-                     </button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           ))}
         </div>
+
+        {/* Carousel Control */}
+        <button className="absolute -right-4 top-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full shadow-md border border-slate-50 flex items-center justify-center text-slate-300 hover:text-primary transition-colors z-10">
+          <ChevronRight className="w-4 h-4" />
+        </button>
       </div>
-    </section>
+    </div>
   )
 }

@@ -9,12 +9,54 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SearchRouteImport } from './routes/search'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ManageManageEventRouteImport } from './routes/manage/manageEvent'
+import { Route as ManageCreateRouteImport } from './routes/manage/create'
+import { Route as EventSlugEventIdRouteImport } from './routes/$eventSlug.$eventId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ManageManageEventRoute = ManageManageEventRouteImport.update({
+  id: '/manage/manageEvent',
+  path: '/manage/manageEvent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ManageCreateRoute = ManageCreateRouteImport.update({
+  id: '/manage/create',
+  path: '/manage/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventSlugEventIdRoute = EventSlugEventIdRouteImport.update({
+  id: '/$eventSlug/$eventId',
+  path: '/$eventSlug/$eventId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
@@ -25,37 +67,142 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/profile': typeof ProfileRoute
+  '/register': typeof RegisterRoute
+  '/search': typeof SearchRoute
+  '/$eventSlug/$eventId': typeof EventSlugEventIdRoute
+  '/manage/create': typeof ManageCreateRoute
+  '/manage/manageEvent': typeof ManageManageEventRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/profile': typeof ProfileRoute
+  '/register': typeof RegisterRoute
+  '/search': typeof SearchRoute
+  '/$eventSlug/$eventId': typeof EventSlugEventIdRoute
+  '/manage/create': typeof ManageCreateRoute
+  '/manage/manageEvent': typeof ManageManageEventRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/profile': typeof ProfileRoute
+  '/register': typeof RegisterRoute
+  '/search': typeof SearchRoute
+  '/$eventSlug/$eventId': typeof EventSlugEventIdRoute
+  '/manage/create': typeof ManageCreateRoute
+  '/manage/manageEvent': typeof ManageManageEventRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/auth/$'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/profile'
+    | '/register'
+    | '/search'
+    | '/$eventSlug/$eventId'
+    | '/manage/create'
+    | '/manage/manageEvent'
+    | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/auth/$'
-  id: '__root__' | '/' | '/api/auth/$'
+  to:
+    | '/'
+    | '/login'
+    | '/profile'
+    | '/register'
+    | '/search'
+    | '/$eventSlug/$eventId'
+    | '/manage/create'
+    | '/manage/manageEvent'
+    | '/api/auth/$'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/profile'
+    | '/register'
+    | '/search'
+    | '/$eventSlug/$eventId'
+    | '/manage/create'
+    | '/manage/manageEvent'
+    | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LoginRoute: typeof LoginRoute
+  ProfileRoute: typeof ProfileRoute
+  RegisterRoute: typeof RegisterRoute
+  SearchRoute: typeof SearchRoute
+  EventSlugEventIdRoute: typeof EventSlugEventIdRoute
+  ManageCreateRoute: typeof ManageCreateRoute
+  ManageManageEventRoute: typeof ManageManageEventRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/manage/manageEvent': {
+      id: '/manage/manageEvent'
+      path: '/manage/manageEvent'
+      fullPath: '/manage/manageEvent'
+      preLoaderRoute: typeof ManageManageEventRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/manage/create': {
+      id: '/manage/create'
+      path: '/manage/create'
+      fullPath: '/manage/create'
+      preLoaderRoute: typeof ManageCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$eventSlug/$eventId': {
+      id: '/$eventSlug/$eventId'
+      path: '/$eventSlug/$eventId'
+      fullPath: '/$eventSlug/$eventId'
+      preLoaderRoute: typeof EventSlugEventIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/auth/$': {
@@ -70,6 +217,13 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LoginRoute: LoginRoute,
+  ProfileRoute: ProfileRoute,
+  RegisterRoute: RegisterRoute,
+  SearchRoute: SearchRoute,
+  EventSlugEventIdRoute: EventSlugEventIdRoute,
+  ManageCreateRoute: ManageCreateRoute,
+  ManageManageEventRoute: ManageManageEventRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport
