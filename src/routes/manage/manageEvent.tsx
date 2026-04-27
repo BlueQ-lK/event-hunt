@@ -11,7 +11,6 @@ import {
 import {
   BarChart3,
   Calendar,
-  Eye,
   MoreHorizontal,
   Plus,
   Search,
@@ -20,8 +19,10 @@ import {
   ExternalLink,
   Edit,
   Trash2,
+  Eye,
 } from 'lucide-react'
 import * as React from 'react'
+import { Link } from '@tanstack/react-router'
 
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
@@ -40,6 +41,8 @@ import {
   TabsTrigger,
 } from '#/components/ui/tabs'
 import { cn } from '#/lib/utils'
+import { getMyManagedEvents } from '@/server/events'
+import { authClient } from '#/lib/auth-client'
 
 export const Route = createFileRoute('/manage/manageEvent')({
   component: ManageEvents,
@@ -48,77 +51,67 @@ export const Route = createFileRoute('/manage/manageEvent')({
 type Event = {
   id: string
   title: string
-  startDate: string
-  startTime: string
+  startDate: Date | string
+  startTime: string | null
   location: string
   category: string
   status: 'ongoing' | 'upcoming' | 'past'
-  views: number
   interests: number
 }
 
-const mockEvents: Event[] = [
-  {
-    id: '1',
-    title: 'Tech Innovators Summit 2026',
-    startDate: '2026-05-15',
-    startTime: '09:00 AM',
-    location: 'Silicon Valley, CA',
-    category: 'tech',
-    status: 'upcoming',
-    views: 1250,
-    interests: 450,
-  },
-  {
-    id: '2',
-    title: 'Summer Music Festival',
-    startDate: '2026-06-20',
-    startTime: '02:00 PM',
-    location: 'Austin, TX',
-    category: 'music',
-    status: 'upcoming',
-    views: 3400,
-    interests: 890,
-  },
-  {
-    id: '3',
-    title: 'AI & Future Workshop',
-    startDate: '2026-04-25',
-    startTime: '10:00 AM',
-    location: 'Remote',
-    category: 'tech',
-    status: 'ongoing',
-    views: 850,
-    interests: 120,
-  },
-  {
-    id: '4',
-    title: 'Design Systems Conference',
-    startDate: '2026-03-10',
-    startTime: '11:00 AM',
-    location: 'New York, NY',
-    category: 'other',
-    status: 'past',
-    views: 2100,
-    interests: 560,
-  },
-  {
-    id: '5',
-    title: 'Startup Pitch Night',
-    startDate: '2026-05-02',
-    startTime: '06:30 PM',
-    location: 'San Francisco, CA',
-    category: 'business',
-    status: 'upcoming',
-    views: 980,
-    interests: 230,
-  },
-]
+function getEventStatus(startDate: Date | string, endDate?: Date | string | null): Event['status'] {
+  const now = new Date()
+  const start = new Date(startDate)
+  const end = endDate ? new Date(endDate) : null
+
+  if (start > now) return 'upcoming'
+  if (end && end < now) return 'past'
+  return 'ongoing'
+}
 
 export function ManageEvents() {
+  const { data: session, isPending: isSessionPending } = authClient.useSession()
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [globalFilter, setGlobalFilter] = React.useState('')
   const [activeTab, setActiveTab] = React.useState('upcoming')
+  const [eventsData, setEventsData] = React.useState<Event[]>([])
+  const [isLoading, setIsLoading] = React.useState(true)
+  const [loadError, setLoadError] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    if (isSessionPending) return
+
+    if (!session) {
+      setEventsData([])
+      setIsLoading(false)
+      return
+    }
+
+    const load = async () => {
+      setIsLoading(true)
+      setLoadError(null)
+      try {
+        const rows = await getMyManagedEvents()
+        const mapped: Event[] = rows.map((item) => ({
+          id: item.id,
+          title: item.title,
+          startDate: item.startDate,
+          startTime: item.startTime,
+          location: item.locationName || item.city || item.address || 'Location to be announced',
+          category: item.category,
+          status: getEventStatus(item.startDate, item.endDate),
+          interests: item.interestCount,
+        }))
+        setEventsData(mapped)
+      } catch (error) {
+        setLoadError(error instanceof Error ? error.message : 'Failed to load your events.')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    load()
+  }, [session, isSessionPending])
 
   const columns = React.useMemo<ColumnDef<Event>[]>(
     () => [
@@ -167,15 +160,11 @@ export function ManageEvents() {
         ),
       },
       {
-        accessorKey: 'views',
+        accessorKey: 'interests',
         header: 'Engagement',
         cell: ({ row }) => (
           <div className="flex flex-col text-sm">
             <div className="flex items-center gap-1.5">
-              <Eye className="size-3.5 text-muted-foreground" />
-              <span>{row.getValue('views')} views</span>
-            </div>
-            <div className="text-xs text-muted-foreground mt-0.5">
               {row.original.interests} interested
             </div>
           </div>
@@ -200,8 +189,8 @@ export function ManageEvents() {
   )
 
   const filteredData = React.useMemo(() => {
-    return mockEvents.filter((event) => event.status === activeTab)
-  }, [activeTab])
+    return eventsData.filter((event) => event.status === activeTab)
+  }, [activeTab, eventsData])
 
   const table = useReactTable({
     data: filteredData,
@@ -226,8 +215,10 @@ export function ManageEvents() {
             Monitor and manage your hosted events and their performance.
           </p>
         </div>
-        <Button className="w-full md:w-auto gap-2">
-          <Plus className="size-4" /> Create New Event
+        <Button asChild className="w-full md:w-auto gap-2">
+          <Link to="/manage/create">
+            <Plus className="size-4" /> Create New Event
+          </Link>
         </Button>
       </div>
 
@@ -239,7 +230,7 @@ export function ManageEvents() {
             <Calendar className="size-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockEvents.length}</div>
+            <div className="text-2xl font-bold">{eventsData.length}</div>
             <p className="text-xs text-muted-foreground">
               Across all statuses
             </p>
@@ -247,15 +238,15 @@ export function ManageEvents() {
         </Card>
         <Card className="bg-chart-1/5 border-chart-1/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Page Views</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Interests</CardTitle>
             <BarChart3 className="size-4 text-chart-1" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {mockEvents.reduce((acc, curr) => acc + curr.views, 0).toLocaleString()}
+              {eventsData.reduce((acc, curr) => acc + curr.interests, 0).toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              +12% from last month
+              Across all your hosted events
             </p>
           </CardContent>
         </Card>
@@ -267,8 +258,10 @@ export function ManageEvents() {
           <CardContent>
             <div className="text-2xl font-bold">
               {Math.round(
-                mockEvents.reduce((acc, curr) => acc + curr.interests, 0) /
-                  mockEvents.length
+                eventsData.length
+                  ? eventsData.reduce((acc, curr) => acc + curr.interests, 0) /
+                    eventsData.length
+                  : 0
               )}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -283,7 +276,7 @@ export function ManageEvents() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {mockEvents.filter((e) => e.status === 'ongoing').length}
+              {eventsData.filter((e) => e.status === 'ongoing').length}
             </div>
             <p className="text-xs text-muted-foreground">
               Live now
@@ -319,23 +312,33 @@ export function ManageEvents() {
               <TabsTrigger value="ongoing" className="gap-2">
                 Ongoing
                 <Badge variant="secondary" className="px-1.5 py-0 h-4 min-w-[1.25rem] justify-center">
-                  {mockEvents.filter((e) => e.status === 'ongoing').length}
+                  {eventsData.filter((e) => e.status === 'ongoing').length}
                 </Badge>
               </TabsTrigger>
               <TabsTrigger value="upcoming" className="gap-2">
                 Upcoming
                 <Badge variant="secondary" className="px-1.5 py-0 h-4 min-w-[1.25rem] justify-center">
-                  {mockEvents.filter((e) => e.status === 'upcoming').length}
+                  {eventsData.filter((e) => e.status === 'upcoming').length}
                 </Badge>
               </TabsTrigger>
               <TabsTrigger value="past" className="gap-2">
                 Past
                 <Badge variant="secondary" className="px-1.5 py-0 h-4 min-w-[1.25rem] justify-center">
-                  {mockEvents.filter((e) => e.status === 'past').length}
+                  {eventsData.filter((e) => e.status === 'past').length}
                 </Badge>
               </TabsTrigger>
             </TabsList>
 
+            {!session && !isSessionPending && (
+              <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                Login required to manage events.
+              </div>
+            )}
+            {loadError && (
+              <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                {loadError}
+              </div>
+            )}
             <div className="rounded-md border overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -359,7 +362,13 @@ export function ManageEvents() {
                     ))}
                   </thead>
                   <tbody>
-                    {table.getRowModel().rows?.length ? (
+                    {isLoading ? (
+                      <tr>
+                        <td colSpan={columns.length} className="h-24 text-center">
+                          Loading events...
+                        </td>
+                      </tr>
+                    ) : table.getRowModel().rows?.length ? (
                       table.getRowModel().rows.map((row) => (
                         <tr
                           key={row.id}

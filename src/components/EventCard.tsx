@@ -1,21 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { Calendar, Hourglass, Heart } from 'lucide-react'
 import { slugify } from '@/lib/eventSlug'
 import { toggleInterest, getInterestCount, getInterestStatus } from '@/server/events'
-
-// Generate or retrieve a stable anonymous user ID from localStorage
-function getAnonymousUserId(): string {
-  if (typeof window === 'undefined') return 'server'
-  let userId = localStorage.getItem('eh_anonymous_id')
-  if (!userId) {
-    userId = `anon_${Math.random().toString(36).slice(2)}_${Date.now()}`
-    localStorage.setItem('eh_anonymous_id', userId)
-  }
-  return userId
-}
+import { authClient } from '#/lib/auth-client'
 
 export function EventCard({ event }: { event: any }) {
+  const { data: session } = authClient.useSession()
+  const navigate = useNavigate()
   const [isInterested, setIsInterested] = useState(false)
   const [interestCount, setInterestCount] = useState<number>(0)
   const [loading, setLoading] = useState(false)
@@ -23,11 +15,8 @@ export function EventCard({ event }: { event: any }) {
 
   // Load initial interest status and count
   useEffect(() => {
-    const userId = getAnonymousUserId()
-    if (!userId || userId === 'server') return
-
     Promise.all([
-      getInterestStatus({ data: { eventId: event.id, userId } }),
+      getInterestStatus({ data: { eventId: event.id } }),
       getInterestCount({ data: event.id })
     ]).then(([status, count]) => {
       setIsInterested(status.interested)
@@ -36,14 +25,18 @@ export function EventCard({ event }: { event: any }) {
     }).catch(() => {
       setInitialized(true)
     })
-  }, [event.id])
+  }, [event.id, session?.user.id])
 
   const handleInterestToggle = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     if (loading) return
 
-    const userId = getAnonymousUserId()
+    if (!session) {
+      navigate({ to: '/login' })
+      return
+    }
+
     setLoading(true)
 
     // Optimistic update
@@ -52,7 +45,7 @@ export function EventCard({ event }: { event: any }) {
     setInterestCount(prev => wasInterested ? Math.max(0, prev - 1) : prev + 1)
 
     try {
-      const result = await toggleInterest({ data: { eventId: event.id, userId } })
+      const result = await toggleInterest({ data: { eventId: event.id } })
       setIsInterested(result.interested)
       // Refetch actual count
       const freshCount = await getInterestCount({ data: event.id })
@@ -64,7 +57,7 @@ export function EventCard({ event }: { event: any }) {
     } finally {
       setLoading(false)
     }
-  }, [event.id, isInterested, loading])
+  }, [event.id, isInterested, loading, navigate, session])
 
   // Format date: Sun, 24 May, 2026
   const formatDate = (dateStr: string | Date) => {
@@ -105,16 +98,16 @@ export function EventCard({ event }: { event: any }) {
           {/* I'm Interested Button */}
           <button
             onClick={handleInterestToggle}
-            disabled={loading}
+            disabled={loading || !session}
             className={`absolute bottom-2 right-2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[10px] font-bold shadow-md border transition-all z-10 ${
               isInterested
                 ? 'bg-red-500 text-white border-red-500 scale-105'
                 : 'bg-white text-slate-500 border-slate-100 hover:bg-red-50 hover:text-red-500 hover:border-red-200'
-            } ${loading ? 'opacity-70 cursor-wait' : 'cursor-pointer'}`}
-            title={isInterested ? "Remove interest" : "I'm Interested"}
+            } ${loading ? 'opacity-70 cursor-wait' : !session ? 'opacity-80 cursor-not-allowed' : 'cursor-pointer'}`}
+            title={!session ? 'Login required' : isInterested ? 'Remove interest' : "I'm Interested"}
           >
             <Heart className={`w-3 h-3 transition-all ${isInterested ? 'fill-current' : ''}`} />
-            <span>{isInterested ? 'Interested' : "I'm Interested"}</span>
+            <span>{!session ? 'Login to interact' : isInterested ? 'Interested' : "I'm Interested"}</span>
           </button>
         </div>
 

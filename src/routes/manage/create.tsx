@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, Link, redirect } from '@tanstack/react-router'
 import { useState } from 'react'
 import { createEvent } from '@/server/events'
 import { Input } from '@/components/ui/input'
@@ -11,23 +11,26 @@ import {
   Calendar, 
   Clock, 
   Upload, 
-  Plus, 
-  Search, 
-  Building2, 
-
   ChevronRight,
   Info,
-  PhoneCall,
   Image as ImageIcon, 
   ListChecks,
   ChevronDown,
-  X,
 } from 'lucide-react'
 import { Footer } from '@/components/Footer'
 import type { EventForm } from '@/lib/types'
+import { getSession } from '#/lib/auth.functions'
 
 export const Route = createFileRoute('/manage/create')({
   component: CreateEventPage,
+  beforeLoad: async () => {
+    const session = await getSession();
+
+    if(!session){
+      throw redirect({to: "/login"})
+    }
+    return { user: session.user };
+  }
 })
 
 function CreateEventPage() {
@@ -53,8 +56,8 @@ function CreateEventPage() {
   const navigate = useNavigate()
 
   const handleSubmit = async () => {
-    if (!formData.title || !formData.startDate) {
-      setSubmitError('Please fill in all required fields (Title, Start Date).')
+    if (!formData.title || !formData.startDate || !formData.startTime) {
+      setSubmitError('Please fill in all required fields (Title, Start Date, Start Time).')
       return
     }
 
@@ -67,12 +70,12 @@ function CreateEventPage() {
           description: formData.description,
           startDate: formData.startDate,
           endDate: formData.endDate || undefined,
-          startTime: formData.startTime || undefined,
+          startTime: formData.startTime,
           endTime: formData.endTime || undefined,
           locationName: formData.location.name || undefined,
           address: formData.location.address || undefined,
           city: formData.location.city || undefined,
-          category: formData.category,
+          category: formData.category ?? 'other',
           bannerImage: typeof formData.bannerImage === 'string' ? formData.bannerImage || undefined : undefined,
           brochure: typeof formData.brochure === 'string' ? formData.brochure || undefined : undefined,
         }

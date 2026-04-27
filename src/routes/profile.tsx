@@ -1,18 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { 
   User, 
   Mail, 
-  Phone, 
   Bell, 
-  Calendar, 
   Inbox, 
   Heart, 
   Settings, 
   Clock, 
   CalendarSync,
-  ChevronRight,
-  MoreVertical,
   Search
 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -27,70 +23,67 @@ import { Badge } from '@/components/ui/badge'
 import { EventCard } from '@/components/EventCard'
 import { ManageEvents } from '#/routes/manage/manageEvent'
 import { BarChart3 } from 'lucide-react'
+import { authClient } from '#/lib/auth-client'
+import { getMyInterestedEvents } from '@/server/events'
 
-// Dummy Data
-const dummyUser = {
-  name: 'Aryan Singh',
-  email: 'aryan.singh@example.com',
-  phone: '+91 98765 43210',
-  avatar: 'AS',
+const defaultPreferences = {
   newsletterTime: '09:00 AM',
   calendarSync: true,
   allEmailsSubscribed: true
 }
-
-const dummyMessages = [
-  {
-    id: 1,
-    sender: 'Sri Venkateshwara Swamy Temple',
-    subject: 'Brahmostavam 2026 Schedule Updated',
-    preview: 'Namaste Aryan, the schedule for the upcoming Brahmostavam has been updated with new...',
-    date: '2 hours ago',
-    unread: true
-  },
-  {
-    id: 2,
-    sender: 'Navratri Utsav Committee',
-    subject: 'Ticket Confirmation: Mega Dandiya Night',
-    preview: 'Your tickets for the Mega Dandiya Night are confirmed! You can find them in the...',
-    date: '1 day ago',
-    unread: false
-  },
-  {
-    id: 3,
-    sender: 'EventHunt Support',
-    subject: 'Welcome to EventHunt!',
-    preview: 'Welcome to the world\'s finest festival curation platform. We are excited to have you...',
-    date: '3 days ago',
-    unread: false
-  }
-]
-
-const dummyInterestedEvents = [
-  {
-    id: 'event-1',
-    title: 'Annual Brahmostavam 2026',
-    startDate: '2026-05-15',
-    locationName: 'Temple Grounds, Bangalore',
-    category: 'Village Festival',
-    bannerImage: 'https://images.unsplash.com/photo-1582555172866-f73bb12a2ab3?auto=format&fit=crop&q=80&w=800',
-  },
-  {
-    id: 'event-2',
-    title: 'Mega Dandiya Night',
-    startDate: '2026-10-12',
-    locationName: 'Police Grounds, Pune',
-    category: 'Tradition',
-    bannerImage: 'https://images.unsplash.com/photo-1514525253344-a8130a218a10?auto=format&fit=crop&q=80&w=800',
-  }
-]
 
 export const Route = createFileRoute('/profile')({
   component: ProfilePage
 })
 
 function ProfilePage() {
-  const [user, setUser] = useState(dummyUser)
+  const { data: session, isPending: isSessionPending } = authClient.useSession()
+  const [preferences, setPreferences] = useState(defaultPreferences)
+  const [interestedEvents, setInterestedEvents] = useState<any[]>([])
+  const [eventsLoading, setEventsLoading] = useState(true)
+  const [eventsError, setEventsError] = useState<string | null>(null)
+
+  const userName = session?.user.name ?? 'Guest User'
+  const userEmail = session?.user.email ?? 'Not logged in'
+  const userAvatar = userName
+    .split(' ')
+    .map((part) => part[0]?.toUpperCase())
+    .join('')
+    .slice(0, 2) || 'GU'
+
+  useEffect(() => {
+    if (isSessionPending) return
+    if (!session) {
+      setInterestedEvents([])
+      setEventsLoading(false)
+      return
+    }
+
+    let mounted = true
+    const loadInterested = async () => {
+      setEventsLoading(true)
+      setEventsError(null)
+      try {
+        const data = await getMyInterestedEvents()
+        if (mounted) {
+          setInterestedEvents(data)
+        }
+      } catch (error) {
+        if (mounted) {
+          setEventsError(error instanceof Error ? error.message : 'Failed to load interested events.')
+        }
+      } finally {
+        if (mounted) {
+          setEventsLoading(false)
+        }
+      }
+    }
+
+    loadInterested()
+    return () => {
+      mounted = false
+    }
+  }, [session, isSessionPending])
 
   return (
     <div className="min-h-screen bg-slate-50/50 pt-24 pb-16">
@@ -103,15 +96,15 @@ function ProfilePage() {
               <div className="h-24 bg-gradient-to-r from-primary/20 to-primary/5"></div>
               <CardContent className="pt-0 -mt-12 text-center pb-8">
                 <Avatar className="w-24 h-24 mx-auto border-4 border-white shadow-md">
-                  <AvatarImage src="" />
-                  <AvatarFallback className="bg-primary text-white text-2xl font-bold">{user.avatar}</AvatarFallback>
+                  <AvatarImage src={session?.user.image ?? ''} />
+                  <AvatarFallback className="bg-primary text-white text-2xl font-bold">{userAvatar}</AvatarFallback>
                 </Avatar>
-                <h2 className="mt-4 text-xl font-bold text-slate-800">{user.name}</h2>
-                <p className="text-sm text-slate-500 font-medium">{user.email}</p>
+                <h2 className="mt-4 text-xl font-bold text-slate-800">{userName}</h2>
+                <p className="text-sm text-slate-500 font-medium">{userEmail}</p>
                 
                 <div className="mt-8 grid grid-cols-2 gap-4 border-t border-slate-50 pt-6">
                   <div className="text-center">
-                    <p className="text-lg font-bold text-slate-800">12</p>
+                    <p className="text-lg font-bold text-slate-800">{interestedEvents.length}</p>
                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Interested</p>
                   </div>
                   <div className="text-center border-l border-slate-100">
@@ -173,24 +166,9 @@ function ProfilePage() {
                 
                 <Card className="border-none shadow-sm overflow-hidden">
                   <div className="divide-y divide-slate-100">
-                    {dummyMessages.map((msg) => (
-                      <div key={msg.id} className={`p-6 flex gap-4 hover:bg-slate-50 transition-colors cursor-pointer ${msg.unread ? 'bg-primary/5' : ''}`}>
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${msg.unread ? 'bg-primary text-white' : 'bg-slate-100 text-slate-400'}`}>
-                           <Mail className="w-5 h-5" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                             <h4 className={`text-sm font-bold truncate ${msg.unread ? 'text-slate-900' : 'text-slate-700'}`}>{msg.sender}</h4>
-                             <span className="text-[10px] text-slate-400 font-bold whitespace-nowrap ml-2">{msg.date}</span>
-                          </div>
-                          <p className={`text-sm font-bold mb-1 truncate ${msg.unread ? 'text-slate-800' : 'text-slate-600'}`}>{msg.subject}</p>
-                          <p className="text-xs text-slate-500 line-clamp-1">{msg.preview}</p>
-                        </div>
-                        <button className="text-slate-300 hover:text-slate-600">
-                          <MoreVertical className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
+                    <div className="p-6 text-sm text-slate-500">
+                      No inbox messages available yet.
+                    </div>
                   </div>
                 </Card>
               </TabsContent>
@@ -209,10 +187,19 @@ function ProfilePage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {dummyInterestedEvents.map(event => (
+                  {eventsLoading ? (
+                    <div className="text-sm text-slate-500">Loading interested events...</div>
+                  ) : interestedEvents.length === 0 ? (
+                    <div className="text-sm text-slate-500">
+                      {session ? 'No interested events yet.' : 'Login to see your interested events.'}
+                    </div>
+                  ) : interestedEvents.map(event => (
                     <EventCard key={event.id} event={event} />
                   ))}
                 </div>
+                {eventsError && (
+                  <p className="mt-4 text-sm text-red-600">{eventsError}</p>
+                )}
               </TabsContent>
 
               {/* Settings Content */}
@@ -235,7 +222,7 @@ function ProfilePage() {
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="space-y-1">
                         <Label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Email Address</Label>
-                        <p className="text-sm font-bold text-slate-800">{user.email}</p>
+                        <p className="text-sm font-bold text-slate-800">{userEmail}</p>
                       </div>
                       <Button variant="outline" size="sm" className="w-fit rounded-xl border-slate-200">Edit Email</Button>
                     </div>
@@ -245,7 +232,7 @@ function ProfilePage() {
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="space-y-1">
                         <Label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Phone Number</Label>
-                        <p className="text-sm font-bold text-slate-800">{user.phone}</p>
+                        <p className="text-sm font-bold text-slate-800">Not set</p>
                       </div>
                       <Button variant="outline" size="sm" className="w-fit rounded-xl border-slate-200">Edit Phone</Button>
                     </div>
@@ -263,8 +250,8 @@ function ProfilePage() {
                       <div className="w-full md:w-32">
                          <Input 
                            type="time" 
-                           value={user.newsletterTime} 
-                           onChange={(e) => setUser({...user, newsletterTime: e.target.value})}
+                           value={preferences.newsletterTime} 
+                           onChange={(e) => setPreferences({...preferences, newsletterTime: e.target.value})}
                            className="rounded-xl border-slate-200" 
                          />
                       </div>
@@ -281,8 +268,8 @@ function ProfilePage() {
                         <p className="text-xs text-slate-500">Automatically add interested events to your calendar</p>
                       </div>
                       <Switch 
-                        checked={user.calendarSync} 
-                        onCheckedChange={(checked) => setUser({...user, calendarSync: checked})}
+                        checked={preferences.calendarSync} 
+                        onCheckedChange={(checked) => setPreferences({...preferences, calendarSync: checked})}
                       />
                     </div>
                   </CardContent>
@@ -305,8 +292,8 @@ function ProfilePage() {
                       </div>
                       <Switch 
                         className="data-[state=checked]:bg-red-500"
-                        checked={!user.allEmailsSubscribed} 
-                        onCheckedChange={(checked) => setUser({...user, allEmailsSubscribed: !checked})}
+                        checked={!preferences.allEmailsSubscribed} 
+                        onCheckedChange={(checked) => setPreferences({...preferences, allEmailsSubscribed: !checked})}
                       />
                     </div>
                   </CardContent>

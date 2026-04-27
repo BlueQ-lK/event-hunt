@@ -1,34 +1,51 @@
 import { createServerFn } from '@tanstack/react-start'
+import { getRequest } from '@tanstack/react-start/server'
 import { z } from 'zod'
 import { db } from '@/db'
 import { events, eventInterests } from '@/db/schema'
-import { eq, and, gte, lte, lt, desc, sql, count } from 'drizzle-orm'
+import { eq, and, gte, lte, desc, sql, count } from 'drizzle-orm'
+import { auth } from '#/lib/auth'
 
 const createEventSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   startDate: z.string().min(1),
   endDate: z.string().optional(),
-  startTime: z.string().optional(),
+  startTime: z.string().min(1),
   endTime: z.string().optional(),
   locationName: z.string().optional(),
   address: z.string().optional(),
   city: z.string().optional(),
   category: z
-    .enum(['tech', 'music', 'sports', 'education', 'business', 'art', 'health', 'food', 'travel', 'other'])
-    .optional(),
+    .enum(['tech', 'music', 'sports', 'education', 'business', 'art', 'health', 'food', 'travel', 'other']),
   bannerImage: z.string().optional(),
   brochure: z.string().optional(),
 })
 
 export type CreateEventInput = z.infer<typeof createEventSchema>
 
+async function getSessionOrThrow() {
+  const request = getRequest()
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  })
+
+  if (!session) {
+    throw new Error('Unauthorized')
+  }
+
+  return session
+}
+
 export const createEvent = createServerFn({ method: 'POST' })
   .inputValidator(createEventSchema)
   .handler(async ({ data }) => {
+    const session = await getSessionOrThrow()
+
     const [event] = await db
       .insert(events)
       .values({
+        userId: session.user.id,
         title: data.title,
         description: data.description,
         startDate: new Date(data.startDate),
@@ -62,15 +79,17 @@ export const getEvent = createServerFn({ method: 'GET' })
 // ------- "I'm Interested" feature -------
 
 export const toggleInterest = createServerFn({ method: 'POST' })
-  .inputValidator(z.object({ eventId: z.string(), userId: z.string() }))
+  .inputValidator(z.object({ eventId: z.string() }))
   .handler(async ({ data }) => {
+    const session = await getSessionOrThrow()
+
     const existing = await db
       .select()
       .from(eventInterests)
       .where(
         and(
           eq(eventInterests.eventId, data.eventId),
-          eq(eventInterests.userId, data.userId)
+          eq(eventInterests.userId, session.user.id)
         )
       )
 
@@ -80,7 +99,7 @@ export const toggleInterest = createServerFn({ method: 'POST' })
         .where(
           and(
             eq(eventInterests.eventId, data.eventId),
-            eq(eventInterests.userId, data.userId)
+            eq(eventInterests.userId, session.user.id)
           )
         )
       return { interested: false }
@@ -88,21 +107,30 @@ export const toggleInterest = createServerFn({ method: 'POST' })
 
     await db.insert(eventInterests).values({
       eventId: data.eventId,
-      userId: data.userId
+      userId: session.user.id
     })
     return { interested: true }
   })
 
 export const getInterestStatus = createServerFn({ method: 'GET' })
-  .inputValidator(z.object({ eventId: z.string(), userId: z.string() }))
+  .inputValidator(z.object({ eventId: z.string() }))
   .handler(async ({ data }) => {
+    const request = getRequest()
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    })
+
+    if (!session) {
+      return { interested: false }
+    }
+
     const existing = await db
       .select()
       .from(eventInterests)
       .where(
         and(
           eq(eventInterests.eventId, data.eventId),
-          eq(eventInterests.userId, data.userId)
+          eq(eventInterests.userId, session.user.id)
         )
       )
     return { interested: existing.length > 0 }
@@ -201,4 +229,58 @@ export const getAllEvents = createServerFn({ method: 'GET' })
       .from(events)
       .orderBy(desc(events.createdAt))
       .limit(8)
+  })
+
+export const getMyManagedEvents = createServerFn({ method: 'GET' })
+  .handler(async () => {
+    const session = await getSessionOrThrow()
+
+    return await db
+      .select({
+        id: events.id,
+        title: events.title,
+        startDate: events.startDate,
+        endDate: events.endDate,
+        startTime: events.startTime,
+        endTime: events.endTime,
+        locationName: events.locationName,
+        address: events.address,
+        city: events.city,
+        category: events.category,
+        bannerImage: events.bannerImage,
+        createdAt: events.createdAt,
+        interestCount: count(eventInterests.id),
+      })
+      .from(events)
+      .leftJoin(eventInterests, eq(eventInterests.eventId, events.id))
+      .where(eq(events.userId, session.user.id))
+      .groupBy(events.id)
+      .orderBy(desc(events.createdAt))
+  })
+
+export const getMyInterestedEvents = createServerFn({ method: 'GET' })
+  .handler(async () => {
+    const session = await getSessionOrThrow()
+
+    return await db
+      .select({
+        id: events.id,
+        title: events.title,
+        description: events.description,
+        startDate: events.startDate,
+        endDate: events.endDate,
+        startTime: events.startTime,
+        endTime: events.endTime,
+        locationName: events.locationName,
+        address: events.address,
+        city: events.city,
+        category: events.category,
+        bannerImage: events.bannerImage,
+        brochure: events.brochure,
+        createdAt: events.createdAt,
+      })
+      .from(eventInterests)
+      .innerJoin(events, eq(events.id, eventInterests.eventId))
+      .where(eq(eventInterests.userId, session.user.id))
+      .orderBy(desc(eventInterests.createdAt))
   })
