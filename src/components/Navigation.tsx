@@ -12,15 +12,31 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Heart, LayoutDashboard, PlusCircle, HelpCircle, Settings } from 'lucide-react'
+import { Heart, LayoutDashboard, PlusCircle, HelpCircle, Settings, Navigation as NavIcon, Loader2 } from 'lucide-react'
 import { getMyInterestedEvents } from '@/server/events'
 import { useEffect, useState } from 'react'
 import { Badge } from './ui/badge'
+import { getStoredCity, normalizeCitySlug, saveCityLocally, fetchCityFromCoords } from '@/lib/location'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { updateUserCity } from '@/server/location'
 
 export function Navigation() {
   const { data: session, isPending } = authClient.useSession()
   const navigate = useNavigate()
   const [interestCount, setInterestCount] = useState(0)
+  const [activeCity, setActiveCity] = useState(getStoredCity())
+  const [isLocationDialogOpen, setIsLocationDialogOpen] = useState(false)
+  const [manualCity, setManualCity] = useState('')
+  const [isLocating, setIsLocating] = useState(false)
 
   useEffect(() => {
     if (session?.user) {
@@ -29,6 +45,10 @@ export function Navigation() {
       }).catch(() => {})
     }
   }, [session?.user])
+
+  useEffect(() => {
+    setActiveCity(getStoredCity())
+  }, [])
 
   const handleLogout = async () => {
     await authClient.signOut({
@@ -40,11 +60,60 @@ export function Navigation() {
     })
   }
 
+  const handleLocationSelect = async (city: string) => {
+    const normalized = normalizeCitySlug(city)
+    saveCityLocally(normalized)
+    
+    if (session?.user) {
+      try {
+        await updateUserCity({ data: { city: normalized } })
+      } catch (error) {
+        console.error('Failed to update city in DB:', error)
+      }
+    }
+    
+    setActiveCity(normalized)
+    setIsLocationDialogOpen(false)
+    setManualCity('')
+    
+    // Navigate to the new city page
+    navigate({ 
+      to: '/$city/all', 
+      params: { city: normalized } 
+    })
+  }
+
+  const handleUseCurrentLocation = async () => {
+    setIsLocating(true)
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
+        })
+      })
+      const city = await fetchCityFromCoords(position.coords.latitude, position.coords.longitude)
+      await handleLocationSelect(city)
+    } catch (error) {
+      console.error('Error getting location:', error)
+      // Fallback or error message could be added here
+    } finally {
+      setIsLocating(false)
+    }
+  }
+
+  const handleManualSubmit = () => {
+    if (manualCity.trim()) {
+      handleLocationSelect(manualCity)
+    }
+  }
+
   return (
     <nav className="fixed top-0 z-50 w-full bg-white border-b border-slate-100 py-3 px-6">
       <div className="max-w-[1500px] mx-auto flex items-center justify-between">
         <div className="flex items-center gap-10">
-          <Link to="/" className="flex items-center gap-2">
+          <Link to="/$city/all" params={{ city: activeCity }} className="flex items-center gap-2">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <svg viewBox="0 0 24 24" className="w-5 h-5 text-white fill-current">
                 <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z" />
@@ -54,17 +123,20 @@ export function Navigation() {
           </Link>
 
           <div className="hidden lg:flex items-center gap-8 text-sm font-medium text-slate-600">
-            <Link to="/" className="nav-link-active">Home</Link>
+            <Link to="/$city/all" params={{ city: activeCity }} className="nav-link-active">Home</Link>
             <Link to="/search" className="hover:text-primary transition-colors">Events</Link>
-            <Link to="/" className="hover:text-primary transition-colors">Map</Link>
-            <Link to="/" className="hover:text-primary transition-colors">About Us</Link>
+            <Link to="/$city/all" params={{ city: activeCity }} className="hover:text-primary transition-colors">Map</Link>
+            <Link to="/$city/all" params={{ city: activeCity }} className="hover:text-primary transition-colors">About Us</Link>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 text-slate-600 text-xs font-medium border border-slate-100 cursor-pointer hover:bg-slate-100 transition-colors">
+          <div 
+            onClick={() => setIsLocationDialogOpen(true)}
+            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 text-slate-600 text-xs font-medium border border-slate-100 cursor-pointer hover:bg-slate-100 transition-colors"
+          >
             <MapPin className="w-3.5 h-3.5 text-primary" />
-            <span>Yennahole, KA</span>
+            <span>{activeCity.replace(/-/g, ' ')}</span>
             <ChevronDown className="w-3 h-3" />
           </div>
 
@@ -187,6 +259,70 @@ export function Navigation() {
           </div>
         </div>
       </div>
+
+      <Dialog open={isLocationDialogOpen} onOpenChange={setIsLocationDialogOpen}>
+        <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden border-none shadow-2xl rounded-3xl">
+          <div className="bg-primary/5 p-8 text-center border-b border-primary/10">
+            <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4 border border-primary/10">
+              <MapPin className="w-8 h-8 text-primary" />
+            </div>
+            <DialogTitle className="text-2xl font-bold text-slate-900 mb-2">Set your location</DialogTitle>
+            <DialogDescription className="text-slate-500 font-medium">
+              Find the best events and activities happening near you
+            </DialogDescription>
+          </div>
+
+          <div className="p-6 space-y-6">
+            <Button 
+              variant="outline" 
+              className="w-full flex items-center gap-3 justify-center h-14 rounded-2xl border-slate-200 hover:border-primary hover:bg-primary/5 hover:text-primary transition-all font-bold text-slate-700"
+              onClick={handleUseCurrentLocation}
+              disabled={isLocating}
+            >
+              {isLocating ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <NavIcon className="w-5 h-5" />
+              )}
+              {isLocating ? 'Determining location...' : 'Use current location'}
+            </Button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-slate-100" />
+              </div>
+              <div className="relative flex justify-center text-[10px] uppercase tracking-widest font-black text-slate-400">
+                <span className="bg-white px-4">Or enter manually</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="city" className="text-xs font-bold uppercase tracking-wider text-slate-400 ml-1">City Name</Label>
+              <div className="relative group">
+                <Input 
+                  id="city" 
+                  placeholder="e.g. Mumbai, Bangalore, New York" 
+                  value={manualCity}
+                  onChange={(e) => setManualCity(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleManualSubmit()}
+                  className="h-14 rounded-2xl border-slate-200 focus:border-primary focus:ring-primary/10 bg-slate-50/50 pl-12 transition-all font-medium"
+                />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary transition-colors" />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="p-6 bg-slate-50/50 border-t border-slate-100 sm:justify-center">
+            <Button 
+              onClick={handleManualSubmit} 
+              disabled={!manualCity.trim() || isLocating}
+              className="w-full h-14 rounded-2xl bg-primary hover:bg-primary-hover text-white font-bold shadow-lg shadow-primary/20 transition-all disabled:opacity-50 disabled:shadow-none"
+            >
+              Confirm Location
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </nav>
   )
 }

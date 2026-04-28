@@ -17,6 +17,7 @@ import { Route as HelpRouteImport } from './routes/help'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ManageCreateRouteImport } from './routes/manage/create'
 import { Route as EventSlugEventIdRouteImport } from './routes/$eventSlug.$eventId'
+import { Route as CityAllRouteImport } from './routes/$city.all'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const SearchRoute = SearchRouteImport.update({
@@ -59,6 +60,11 @@ const EventSlugEventIdRoute = EventSlugEventIdRouteImport.update({
   path: '/$eventSlug/$eventId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CityAllRoute = CityAllRouteImport.update({
+  id: '/$city/all',
+  path: '/$city/all',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/search': typeof SearchRoute
+  '/$city/all': typeof CityAllRoute
   '/$eventSlug/$eventId': typeof EventSlugEventIdRoute
   '/manage/create': typeof ManageCreateRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/search': typeof SearchRoute
+  '/$city/all': typeof CityAllRoute
   '/$eventSlug/$eventId': typeof EventSlugEventIdRoute
   '/manage/create': typeof ManageCreateRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/search': typeof SearchRoute
+  '/$city/all': typeof CityAllRoute
   '/$eventSlug/$eventId': typeof EventSlugEventIdRoute
   '/manage/create': typeof ManageCreateRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -108,6 +117,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/register'
     | '/search'
+    | '/$city/all'
     | '/$eventSlug/$eventId'
     | '/manage/create'
     | '/api/auth/$'
@@ -119,6 +129,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/register'
     | '/search'
+    | '/$city/all'
     | '/$eventSlug/$eventId'
     | '/manage/create'
     | '/api/auth/$'
@@ -130,6 +141,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/register'
     | '/search'
+    | '/$city/all'
     | '/$eventSlug/$eventId'
     | '/manage/create'
     | '/api/auth/$'
@@ -142,6 +154,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   RegisterRoute: typeof RegisterRoute
   SearchRoute: typeof SearchRoute
+  CityAllRoute: typeof CityAllRoute
   EventSlugEventIdRoute: typeof EventSlugEventIdRoute
   ManageCreateRoute: typeof ManageCreateRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -205,6 +218,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventSlugEventIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/$city/all': {
+      id: '/$city/all'
+      path: '/$city/all'
+      fullPath: '/$city/all'
+      preLoaderRoute: typeof CityAllRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -222,6 +242,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   RegisterRoute: RegisterRoute,
   SearchRoute: SearchRoute,
+  CityAllRoute: CityAllRoute,
   EventSlugEventIdRoute: EventSlugEventIdRoute,
   ManageCreateRoute: ManageCreateRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,

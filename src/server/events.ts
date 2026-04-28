@@ -345,6 +345,20 @@ export const getAllEvents = createServerFn({ method: 'GET' })
       .limit(8)
   })
 
+export const getEventsByCity = createServerFn({ method: 'GET' })
+  .inputValidator(z.object({ city: z.string().min(1), limit: z.number().optional() }))
+  .handler(async ({ data }) => {
+    const normalized = data.city.trim().toLowerCase().replace(/-/g, ' ')
+    const rows = await db
+      .select()
+      .from(events)
+      .where(ilike(events.city, normalized))
+      .orderBy(desc(events.createdAt))
+      .limit(data.limit ?? 24)
+
+    return rows
+  })
+
 export const getMyManagedEvents = createServerFn({ method: 'GET' })
   .handler(async () => {
     const session = await getSessionOrThrow()

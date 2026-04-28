@@ -8,6 +8,7 @@ import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 import appCss from '../styles.css?url'
 
 import type { QueryClient } from '@tanstack/react-query'
+import { LocationManager } from '#/components/LocationManager';
 
 interface MyRouterContext {
   queryClient: QueryClient
@@ -45,6 +46,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <Navigation />
+        <LocationManager />
         <main className="pt-20">
           {children}
         </main>
