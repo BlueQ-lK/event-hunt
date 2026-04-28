@@ -99,7 +99,7 @@ export function EventCard({ event }: { event: any }) {
           <button
             onClick={handleInterestToggle}
             disabled={loading || !session}
-            className={`absolute bottom-2 right-2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[10px] font-bold shadow-md border transition-all z-10 ${
+            className={`absolute bottom-2 right-2 flex items-center gap-1.5 p-1.5 rounded-full text-[10px] font-bold shadow-md border transition-all z-10 ${
               isInterested
                 ? 'bg-red-500 text-white border-red-500 scale-105'
                 : 'bg-white text-slate-500 border-slate-100 hover:bg-red-50 hover:text-red-500 hover:border-red-200'
@@ -107,7 +107,6 @@ export function EventCard({ event }: { event: any }) {
             title={!session ? 'Login required' : isInterested ? 'Remove interest' : "I'm Interested"}
           >
             <Heart className={`w-3 h-3 transition-all ${isInterested ? 'fill-current' : ''}`} />
-            <span>{!session ? 'Login to interact' : isInterested ? 'Interested' : "I'm Interested"}</span>
           </button>
         </div>
 

@@ -3,8 +3,136 @@ import { getRequest } from '@tanstack/react-start/server'
 import { z } from 'zod'
 import { db } from '@/db'
 import { events, eventInterests } from '@/db/schema'
-import { eq, and, gte, lte, desc, sql, count } from 'drizzle-orm'
+import { eq, and, gte, lte, desc, asc, sql, count, or, ilike } from 'drizzle-orm'
 import { auth } from '#/lib/auth'
+
+// ---- Search / Filter Server Function ----
+
+export const searchEventsSchema = z.object({
+  q: z.string().optional(),
+  category: z.string().optional(),       // comma-separated list of category values
+  dateRange: z.string().optional(),      // 'any' | 'today' | 'tomorrow' | 'this-week' | 'this-month'
+  city: z.string().optional(),
+  sort: z.string().optional(),           // 'newest' | 'oldest' | 'relevance' | 'date-asc'
+  page: z.coerce.number().optional(),
+  limit: z.coerce.number().optional(),
+})
+
+export type SearchEventsInput = z.infer<typeof searchEventsSchema>
+
+export const searchEvents = createServerFn({ method: 'GET' })
+  .inputValidator(searchEventsSchema)
+  .handler(async ({ data }) => {
+    const {
+      q,
+      category,
+      dateRange,
+      city,
+      sort = 'newest',
+      page = 1,
+      limit = 24,
+    } = data
+
+    const conditions: ReturnType<typeof and>[] = []
+
+    // Full-text-style search across title, locationName, city, description
+    if (q && q.trim()) {
+      const term = `%${q.trim()}%`
+      conditions.push(
+        or(
+          ilike(events.title, term),
+          ilike(events.locationName, term),
+          ilike(events.city, term),
+          ilike(events.description, term),
+        ) as any
+      )
+    }
+
+    // Category filter (comma-separated e.g. "tech,music")
+    if (category && category !== 'all') {
+      const cats = category.split(',').map(c => c.trim()).filter(Boolean)
+      if (cats.length === 1) {
+        conditions.push(eq(events.category, cats[0] as any))
+      } else if (cats.length > 1) {
+        conditions.push(
+          or(...cats.map(c => eq(events.category, c as any))) as any
+        )
+      }
+    }
+
+    // Date range filter
+    if (dateRange && dateRange !== 'any') {
+      const now = new Date()
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      const todayEnd = new Date(todayStart.getTime() + 86_400_000 - 1)
+
+      if (dateRange === 'today') {
+        conditions.push(gte(events.startDate, todayStart))
+        conditions.push(lte(events.startDate, todayEnd))
+      } else if (dateRange === 'tomorrow') {
+        const tomorrowStart = new Date(todayStart.getTime() + 86_400_000)
+        const tomorrowEnd = new Date(tomorrowStart.getTime() + 86_400_000 - 1)
+        conditions.push(gte(events.startDate, tomorrowStart))
+        conditions.push(lte(events.startDate, tomorrowEnd))
+      } else if (dateRange === 'this-week') {
+        const weekEnd = new Date(todayStart.getTime() + 7 * 86_400_000)
+        conditions.push(gte(events.startDate, todayStart))
+        conditions.push(lte(events.startDate, weekEnd))
+      } else if (dateRange === 'this-month') {
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
+        conditions.push(gte(events.startDate, todayStart))
+        conditions.push(lte(events.startDate, monthEnd))
+      }
+    }
+
+    // City filter
+    if (city && city !== 'all') {
+      conditions.push(ilike(events.city, city))
+    }
+
+    // Price filter — events table has no explicit price field yet, so we use
+    // the description heuristic: category "other" for now, placeholder for real price
+    // (when you add a price/isFree column, swap this logic)
+    // Currently a no-op passthrough so the rest of the filters still work.
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined
+
+    // Sort
+    let orderClause
+    if (sort === 'oldest') {
+      orderClause = asc(events.createdAt)
+    } else if (sort === 'date-asc') {
+      orderClause = asc(events.startDate)
+    } else if (sort === 'date-desc') {
+      orderClause = desc(events.startDate)
+    } else {
+      // newest (default)
+      orderClause = desc(events.createdAt)
+    }
+
+    const offset = (page - 1) * limit
+
+    const [rows, totalRows] = await Promise.all([
+      db
+        .select()
+        .from(events)
+        .where(whereClause)
+        .orderBy(orderClause)
+        .limit(limit)
+        .offset(offset),
+      db
+        .select({ count: count() })
+        .from(events)
+        .where(whereClause),
+    ])
+
+    return {
+      events: rows,
+      total: totalRows[0]?.count ?? 0,
+      page,
+      limit,
+    }
+  })
 
 const createEventSchema = z.object({
   title: z.string().min(1),
@@ -146,26 +274,17 @@ export const getInterestCount = createServerFn({ method: 'GET' })
     return result.count
   })
 
-// ------- Home Page Data -------
-
-/**
- * Trending Events:
- * Ongoing events (started <= now <= ended OR no end date) where users marked "I'm Interested" in the last 7 days.
- * Sorted by interest count descending.
- */
 export const getTrendingEvents = createServerFn({ method: 'GET' })
   .handler(async () => {
     const now = new Date()
-    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
 
-    // Get interest counts for the last week per event
+    // Get total interest counts per event
     const interestCounts = db
       .select({
         eventId: eventInterests.eventId,
         interestCount: count(eventInterests.id).as('interest_count')
       })
       .from(eventInterests)
-      .where(gte(eventInterests.createdAt, oneWeekAgo))
       .groupBy(eventInterests.eventId)
       .as('interest_counts')
 
@@ -185,20 +304,15 @@ export const getTrendingEvents = createServerFn({ method: 'GET' })
         bannerImage: events.bannerImage,
         brochure: events.brochure,
         createdAt: events.createdAt,
-        interestCount: sql<number>`COALESCE(${interestCounts.interestCount}, 0)`
+        interestCount: interestCounts.interestCount
       })
       .from(events)
-      .leftJoin(interestCounts, eq(events.id, interestCounts.eventId))
+      .innerJoin(interestCounts, eq(events.id, interestCounts.eventId))
       .where(
-        and(
-          // Event has started
-          lte(events.startDate, now),
-          // Event has not ended yet (ongoing): either no end date or end date >= now
-          sql`(${events.endDate} IS NULL OR ${events.endDate} >= ${now})`
-        )
+        // Event has not ended yet: either no end date or end date >= now
+        sql`(${events.endDate} IS NULL OR ${events.endDate} >= ${now})`
       )
-      .orderBy(desc(sql`COALESCE(${interestCounts.interestCount}, 0)`))
-      .limit(8)
+      .orderBy(desc(interestCounts.interestCount))
 
     return trendingEvents
   })

@@ -42,7 +42,6 @@ export function Navigation() {
           <div className="hidden lg:flex items-center gap-8 text-sm font-medium text-slate-600">
             <Link to="/" className="nav-link-active">Home</Link>
             <Link to="/search" className="hover:text-primary transition-colors">Events</Link>
-            <Link to="/" className="hover:text-primary transition-colors">Festival Hubs</Link>
             <Link to="/" className="hover:text-primary transition-colors">Map</Link>
             <Link to="/" className="hover:text-primary transition-colors">About Us</Link>
           </div>
@@ -55,14 +54,12 @@ export function Navigation() {
             <ChevronDown className="w-3 h-3" />
           </div>
 
-          <div className="relative hidden xl:block">
+          <Link className="relative hidden xl:block" to="/search">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search events, temples, places..."
-              className="bg-slate-50 border border-slate-100 rounded-lg pl-10 pr-4 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-            />
-          </div>
+            <div className='bg-slate-50 border border-slate-100 rounded-lg pl-10 pr-4 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all'>
+              <span>Search events, temples, places...</span>
+            </div>
+          </Link>
 
           <Link to="/manage/create">
             <Button className="bg-primary hover:bg-primary-hover text-white font-semibold rounded-lg px-5 py-2 shadow-sm flex items-center gap-2">

@@ -1,38 +1,33 @@
-import { Search, MapPin, ChevronDown, Music, Briefcase, Trophy, Utensils, PartyPopper, Sparkles, Music2, Mic2 } from 'lucide-react'
+import { Search, MapPin, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Link } from '@tanstack/react-router'
 
 const categories = [
-  { name: 'Music', icon: Music, color: 'text-blue-600', bg: 'group-hover:bg-blue-50' },
-  { name: 'Business', icon: Briefcase, color: 'text-slate-700', bg: 'group-hover:bg-slate-50' },
-  { name: 'Sports', icon: Trophy, color: 'text-orange-600', bg: 'group-hover:bg-orange-50' },
-  { name: 'Food & Drink', icon: Utensils, color: 'text-red-600', bg: 'group-hover:bg-red-50' },
-  { name: 'Parties', icon: PartyPopper, color: 'text-purple-600', bg: 'group-hover:bg-purple-50' },
-  { name: 'Festivals', icon: Sparkles, color: 'text-yellow-600', bg: 'group-hover:bg-yellow-50' },
-  { name: 'Dance', icon: Music2, color: 'text-pink-600', bg: 'group-hover:bg-pink-50' },
-  { name: 'Comedy', icon: Mic2, color: 'text-emerald-600', bg: 'group-hover:bg-emerald-50' },
+  { name: 'Music', image: '/images/music.png', color: 'from-blue-600/80 to-blue-900/90' },
+  { name: 'Business', image: '/images/business.png', color: 'from-slate-700/80 to-slate-900/90' },
+  { name: 'Sports', image: '/images/sports.png', color: 'from-orange-600/80 to-orange-900/90' },
+  { name: 'Food & Drink', image: '/images/food-drink.png', color: 'from-red-600/80 to-red-900/90' },
+  { name: 'Parties', image: '/images/parties.png', color: 'from-purple-600/80 to-purple-900/90' },
+  { name: 'Festivals', image: '/images/festivals.png', color: 'from-yellow-600/80 to-yellow-900/90' },
+  { name: 'Dance', image: '/images/dance.png', color: 'from-pink-600/80 to-pink-900/90' },
+  { name: 'Comedy', image: '/images/comedy.png', color: 'from-emerald-600/80 to-emerald-900/90' },
 ]
 
 export function HeroSection() {
   return (
-    <>
-      <section className="relative mx-6 rounded-3xl overflow-hidden shadow-2xl py-12">
+    <div className='container-custom'>
+      <section className="relative rounded-3xl overflow-hidden  py-12">
         {/* Hero Image */}
         <div className="absolute inset-0">
-          <img 
-            src="https://images.unsplash.com/photo-1590050752117-23a9d7f28243?q=80&w=2000&auto=format&fit=crop" 
-            alt="Temple Festival" 
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-900/90 via-blue-800/70 to-transparent" />
         </div>
 
         <div className="relative z-10 h-full flex flex-col justify-center px-12 md:px-24 text-white">
-          <h1 className="text-5xl md:text-6xl font-extrabold mb-4 tracking-tight">
-            Discover. Celebrate. <span className="text-primary">Connect.</span>
+          <h1 className="text-5xl md:text-6xl font-medium mb-6 tracking-tight">
+            All Events in <span className="font-bold">$Mangalore</span>
           </h1>
-          <p className="text-lg md:text-xl text-white/80 mb-6 max-w-xl font-medium">
-            Find and share festivals, events, and spiritual experiences around you.
+          <p className="text-base text-white/80 mb-6 max-w-2xl font-medium">
+            Discover the best things to do & events in $Mangalore. Explore concerts, meetups, open mics, art shows, music events and a lot more.
           </p>
 
           {/* Search Bar */}
@@ -72,30 +67,43 @@ export function HeroSection() {
       </section>
 
       {/* Mangalore's Most-Loved Section */}
-      <div className="mx-6 mt-10 mb-8 px-4">
-        <div className="flex items-center gap-4 mb-6">
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight">Mangalore's Most-Loved</h2>
-          <div className="h-px flex-1 bg-slate-100 hidden sm:block" />
+      <div className="mt-12 mb-12">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-1">$Mangalore Most-Loved</h2>
+            <p className="text-slate-500 font-medium text-sm">Explore the most popular categories in the city</p>
+          </div>
         </div>
         
-        <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-4 md:gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
           {categories.map((cat) => (
             <Link 
               key={cat.name} 
               to="/search" 
               search={{ category: cat.name }}
-              className="flex flex-col items-center gap-4 group cursor-pointer"
+              className="relative aspect-square rounded-2xl overflow-hidden group cursor-pointer shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
             >
-              <div className={`w-full aspect-square rounded-3xl bg-white border border-slate-100 shadow-sm flex items-center justify-center transition-all duration-500 group-hover:shadow-xl group-hover:-translate-y-2 group-hover:border-primary/20 ${cat.bg}`}>
-                <cat.icon className={`w-8 h-8 text-slate-400 group-hover:${cat.color} group-hover:scale-110 transition-all duration-500`} />
+              {/* Background Image */}
+              <img 
+                src={cat.image} 
+                alt={cat.name}
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+              
+              {/* Gradient Overlay */}
+              <div className={`absolute inset-0 bg-gradient-to-t ${cat.color} opacity-60 group-hover:opacity-80 transition-opacity duration-500`} />
+              
+              {/* Text Content */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
+                <span className="text-white text-sm font-black uppercase tracking-wider drop-shadow-md">
+                  {cat.name}
+                </span>
+                <div className="w-0 h-0.5 bg-white mt-2 group-hover:w-8 transition-all duration-500" />
               </div>
-              <span className="text-[10px] font-black text-slate-400 group-hover:text-slate-900 tracking-widest uppercase transition-colors text-center">
-                {cat.name}
-              </span>
             </Link>
           ))}
         </div>
       </div>
-    </>
+    </div>
   )
 }
