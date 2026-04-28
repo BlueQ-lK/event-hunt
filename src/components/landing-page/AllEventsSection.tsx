@@ -19,7 +19,6 @@ type Event = {
   createdAt: Date
 }
 
-const categories = ['All', 'Trending', 'Upcoming']
 
 export function AllEventsSection({ events }: { events: Event[] }) {
   return (
@@ -28,21 +27,6 @@ export function AllEventsSection({ events }: { events: Event[] }) {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
             <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">Explore Events</h2>
-          </div>
-          
-          <div className="flex items-center gap-4">
-             <div className="hidden lg:flex items-center gap-2 bg-slate-50 p-1 rounded-xl border border-slate-100">
-               {categories.map((cat) => (
-                 <button 
-                   key={cat} 
-                   className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-                     cat === 'All' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
-                   }`}
-                 >
-                   {cat}
-                 </button>
-               ))}
-             </div>
           </div>
         </div>
 

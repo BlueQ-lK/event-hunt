@@ -103,7 +103,7 @@ function CreateEventPage() {
   ]
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-40">
       {/* Header */}
       <header className=" py-6 px-6">
         <div className="container-custom flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -368,6 +368,15 @@ function CreateEventPage() {
               <p className="text-[10px] font-bold text-slate-400 mt-2">You can add more images and documents after creating the event.</p>
               </div>
             </FormSection>
+            <div className="flex items-center  gap-3 mt-12 mb-8">
+          <Button 
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="bg-primary hover:bg-primary-hover text-white font-bold px-8 shadow-lg shadow-primary/20 disabled:opacity-60"
+          >
+            {isSubmitting ? 'Publishing...' : 'Publish Event'}
+          </Button>
+        </div>
           </div>
 
           {/* Sidebar (Right) */}
@@ -447,11 +456,7 @@ function CreateEventPage() {
 
           </aside>
         </div>
-
-       
       </main>
-
-      <Footer />
     </div>
   )
 }

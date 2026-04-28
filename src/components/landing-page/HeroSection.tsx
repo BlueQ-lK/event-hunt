@@ -1,6 +1,7 @@
 import { Search, MapPin, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
+import { useState } from 'react'
 
 const categories = [
   { name: 'Music', image: '/images/music.png', color: 'from-blue-600/80 to-blue-900/90' },
@@ -14,6 +15,26 @@ const categories = [
 ]
 
 export function HeroSection() {
+  const [query, setQuery] = useState('')
+  const navigate = useNavigate()
+
+  const handleSearch = (e?: React.FormEvent) => {
+    e?.preventDefault()
+    if (query.trim()) {
+      navigate({
+        to: '/search',
+        search: { q: query.trim() }
+      })
+    }
+  }
+
+  const handlePopularSearch = (tag: string) => {
+    navigate({
+      to: '/search',
+      search: { q: tag }
+    })
+  }
+
   return (
     <div className='container-custom'>
       <section className="relative rounded-3xl overflow-hidden  py-12">
@@ -31,11 +52,16 @@ export function HeroSection() {
           </p>
 
           {/* Search Bar */}
-          <div className="flex flex-col md:flex-row items-center gap-0 bg-white rounded-xl p-1 shadow-2xl max-w-3xl overflow-hidden border border-white/20">
+          <form 
+            onSubmit={handleSearch}
+            className="flex flex-col md:flex-row items-center gap-0 bg-white rounded-xl p-1 shadow-2xl max-w-3xl overflow-hidden border border-white/20"
+          >
             <div className="flex-1 flex items-center px-4 py-3 group">
               <Search className="w-5 h-5 text-slate-400 mr-3" />
               <input 
                 type="text" 
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search events, temples, places..." 
                 className="w-full bg-transparent border-none focus:outline-none text-slate-800 font-medium placeholder:text-slate-400"
               />
@@ -49,16 +75,23 @@ export function HeroSection() {
               <ChevronDown className="w-4 h-4 text-slate-400 ml-2" />
             </div>
 
-            <Button className="bg-primary hover:bg-primary-hover text-white font-bold h-12 px-10 rounded-lg m-1">
+            <Button 
+              type="submit"
+              className="bg-primary hover:bg-primary-hover text-white font-bold h-12 px-10 rounded-lg m-1"
+            >
               Search
             </Button>
-          </div>
+          </form>
 
           {/* Popular Searches */}
           <div className="flex items-center gap-3 mt-6 flex-wrap">
             <span className="text-sm font-semibold text-white/70">Popular Searches:</span>
             {['Temple Festivals', 'Car Festivals', 'Music Events', 'Cultural Programs'].map(tag => (
-              <button key={tag} className="px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-bold hover:bg-white/20 transition-all">
+              <button 
+                key={tag} 
+                onClick={() => handlePopularSearch(tag)}
+                className="px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-bold hover:bg-white/20 transition-all"
+              >
                 {tag}
               </button>
             ))}

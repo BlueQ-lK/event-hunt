@@ -52,8 +52,8 @@ const DATE_RANGE_OPTIONS = [
 const SORT_OPTIONS = [
   { label: 'Newest first', value: 'newest' },
   { label: 'Oldest first', value: 'oldest' },
-  { label: 'Date ↑',       value: 'date-asc' },
-  { label: 'Date ↓',       value: 'date-desc' },
+  { label: 'Event Date ↑',       value: 'date-asc' },
+  { label: 'Event Date ↓',       value: 'date-desc' },
 ]
 
 // ── Page ─────────────────────────────────────────────────────────────────────

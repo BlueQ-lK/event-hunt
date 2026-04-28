@@ -44,10 +44,6 @@ import { cn } from '#/lib/utils'
 import { getMyManagedEvents } from '@/server/events'
 import { authClient } from '#/lib/auth-client'
 
-export const Route = createFileRoute('/manage/manageEvent')({
-  component: ManageEvents,
-})
-
 type Event = {
   id: string
   title: string
@@ -67,6 +63,14 @@ function getEventStatus(startDate: Date | string, endDate?: Date | string | null
   if (start > now) return 'upcoming'
   if (end && end < now) return 'past'
   return 'ongoing'
+}
+
+function formatDate(date: Date | string) {
+  return new Date(date).toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  })
 }
 
 export function ManageEvents() {
@@ -138,7 +142,7 @@ export function ManageEvents() {
           <div className="flex flex-col text-sm">
             <div className="flex items-center gap-1.5">
               <Calendar className="size-3.5 text-muted-foreground" />
-              <span>{row.getValue('startDate')}</span>
+              <span>{formatDate(row.getValue('startDate'))}</span>
             </div>
             <div className="flex items-center gap-1.5 text-muted-foreground mt-0.5">
               <Clock className="size-3.5" />
