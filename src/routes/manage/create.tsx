@@ -18,6 +18,7 @@ import {
   ListChecks,
   ChevronDown,
   ChevronUp,
+  X,
 } from 'lucide-react'
 import { Footer } from '@/components/Footer'
 import type { EventForm } from '@/lib/types'
@@ -50,7 +51,6 @@ function CreateEventPage() {
     },
     category: 'other',
     bannerImage: '',
-    brochure: '',
     facebook: '',
     instagram: '',
     twitter: '',
@@ -81,7 +81,6 @@ function CreateEventPage() {
           city: formData.location.city || undefined,
           category: formData.category ?? 'other',
           bannerImage: typeof formData.bannerImage === 'string' ? formData.bannerImage || undefined : undefined,
-          brochure: typeof formData.brochure === 'string' ? formData.brochure || undefined : undefined,
           facebook: formData.facebook || undefined,
           instagram: formData.instagram || undefined,
           twitter: formData.twitter || undefined,
@@ -126,40 +125,44 @@ function CreateEventPage() {
   ]
 
   return (
-    <div className="min-h-screen pb-40 px-50">
+    <div className="min-h-screen pb-20 sm:pb-40">
       {/* Header */}
-      <header className=" py-6 px-6">
-        <div className="container-custom flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <header className="py-6 sm:py-10 border-b border-slate-100 bg-white/50 backdrop-blur-sm sticky top-0 z-40">
+        <div className="container-custom flex flex-col sm:flex-row sm:items-center justify-between gap-6 px-4">
           <div>
-            <h1 className="text-2xl font-black text-slate-900 mb-1">Create Event</h1>
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
+            <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
               <Link to="/" className="hover:text-primary transition-colors">Home</Link>
               <ChevronRight className="w-3 h-3" />
               <span className="text-slate-600">Create Event</span>
             </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Create Event</h1>
           </div>
+          <div className="flex items-center gap-4">
+            <Button 
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="w-full sm:w-auto bg-slate-900 hover:bg-indigo-600 text-white font-black uppercase tracking-widest h-12 sm:h-14 px-8 rounded-2xl shadow-xl shadow-slate-900/10 transition-all active:scale-95 disabled:opacity-60"
+            >
+              {isSubmitting ? 'Publishing...' : 'Publish Event'}
+            </Button>
+          </div>
+        </div>
         {submitError && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 font-medium">
-            {submitError}
+          <div className="container-custom px-4 mt-4">
+            <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-xs font-bold text-red-700 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                <X className="w-3.5 h-3.5" />
+              </div>
+              {submitError}
+            </div>
           </div>
         )}
-        <div className="flex items-center gap-3 mt-4 mb-8">
-          <Button 
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="bg-primary hover:bg-primary-hover text-white font-bold px-8 shadow-lg shadow-primary/20 disabled:opacity-60"
-          >
-            {isSubmitting ? 'Publishing...' : 'Publish Event'}
-          </Button>
-        </div>
-        </div>
       </header>
 
-      <main className="container-custom">
-        <div className="">
-          
-          {/* Form Content (Left) */}
-          <div className="lg:col-span-8 space-y-8 border p-5 rounded-lg">
+      <main className="container-custom px-4 py-8 sm:py-12">
+        <div className="max-w-4xl mx-auto">
+          {/* Form Content */}
+          <div className="space-y-12 sm:space-y-20">
             
             {/* Step 1: Basic Information */}
             <FormSection number={1} title="Basic Information" >
@@ -435,31 +438,21 @@ function CreateEventPage() {
                     <p className="text-[10px] font-bold text-slate-400">PNG, JPG or WEBP (Max. 5MB)</p>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700">Brochure / Poster <span className="text-slate-400 font-medium">(optional)</span></label>
-                  <div className="border-2 border-dashed border-slate-200 rounded-lg p-8 flex flex-col items-center justify-center bg-white hover:border-primary/50 transition-all cursor-pointer group">
-                    <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-primary mb-4 group-hover:bg-primary/10 transition-all">
-                      <Upload className="w-6 h-6" />
-                    </div>
-                    <p className="text-xs font-bold text-slate-700 mb-1"><span className="text-primary">Click to upload</span> or drag and drop</p>
-                    <p className="text-[10px] font-bold text-slate-400">PDF, PNG, JPG (Max. 10MB)</p>
-                  </div>
-                </div>
               </div>
               <p className="text-[10px] font-bold text-slate-400 mt-2">You can add more images and documents after creating the event.</p>
               </div>
             </FormSection>
-            <div className="flex items-center  gap-3 mt-12 mb-8">
-          <Button 
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="bg-primary hover:bg-primary-hover text-white font-bold px-8 shadow-lg shadow-primary/20 disabled:opacity-60"
-          >
-            {isSubmitting ? 'Publishing...' : 'Publish Event'}
-          </Button>
-        </div>
+            {/* Final Action (Mobile only redundant) */}
+            <div className="pt-8 border-t border-slate-100 block sm:hidden">
+              <Button 
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="w-full bg-slate-900 hover:bg-indigo-600 text-white font-black uppercase tracking-widest h-14 rounded-2xl shadow-xl transition-all"
+              >
+                {isSubmitting ? 'Publishing...' : 'Publish Event'}
+              </Button>
+            </div>
           </div>
-
         </div>
       </main>
     </div>
@@ -468,14 +461,14 @@ function CreateEventPage() {
 
 function FormSection({ number, title, children }: { number: number; title: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center gap-4">
-        <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-lg shadow-primary/20">
+        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black text-sm sm:text-base shrink-0 shadow-xl shadow-indigo-600/20 transform -rotate-3 hover:rotate-0 transition-transform duration-300">
           {number}
         </div>
-        <h2 className="text-xl font-black text-slate-800 tracking-tight">{title}</h2>
+        <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{title}</h2>
       </div>
-      <div className="pl-0 md:pl-12 space-y-6">
+      <div className="pl-0 sm:pl-16 space-y-8 sm:space-y-10">
         {children}
       </div>
     </div>

@@ -163,42 +163,39 @@ function SearchPage() {
 
           <form onSubmit={handleQuerySubmit} className="flex flex-col md:flex-row gap-3">
             {/* Query input */}
-            <div className="flex-1 flex items-center bg-white rounded-xl shadow-sm border border-slate-200 px-4 py-3 gap-3 focus-within:border-primary transition-colors">
+            <div className="flex-[2] flex items-center bg-white rounded-2xl shadow-sm border border-slate-200 px-4 py-3.5 sm:py-4 gap-3 focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/5 transition-all">
               <Search className="w-5 h-5 text-slate-400 shrink-0" />
               <input
                 type="text"
                 value={inputQ}
                 onChange={(e) => handleQueryChange(e.target.value)}
                 placeholder="Search events, places, categories…"
-                className="flex-1 bg-transparent border-none focus:outline-none text-slate-800 font-medium placeholder:text-slate-400 text-sm"
+                className="flex-1 bg-transparent border-none focus:outline-none text-slate-800 font-bold placeholder:text-slate-400 text-sm sm:text-base"
               />
               {inputQ && (
-                <button type="button" onClick={() => handleQueryChange('')}>
-                  <X className="w-4 h-4 text-slate-300 hover:text-slate-500 transition-colors" />
+                <button type="button" onClick={() => handleQueryChange('')} className="p-1 hover:bg-slate-50 rounded-lg transition-colors">
+                  <X className="w-4 h-4 text-slate-400 hover:text-slate-600" />
                 </button>
               )}
             </div>
 
             {/* City input */}
-            <div className="flex items-center bg-white rounded-xl shadow-sm border border-slate-200 px-4 py-3 gap-3 md:w-64 focus-within:border-primary transition-colors">
-              <MapPin className="w-5 h-5 text-primary shrink-0" />
+            <div className="flex-1 flex items-center bg-white rounded-2xl shadow-sm border border-slate-200 px-4 py-3.5 sm:py-4 gap-3 md:max-w-[300px] focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/5 transition-all">
+              <MapPin className="w-5 h-5 text-indigo-500 shrink-0" />
               <input
                 type="text"
                 value={inputCity}
                 onChange={(e) => handleCityChange(e.target.value)}
                 placeholder="City (e.g. Mangalore)"
-                className="flex-1 bg-transparent border-none focus:outline-none text-slate-800 font-medium placeholder:text-slate-400 text-sm"
+                className="flex-1 bg-transparent border-none focus:outline-none text-slate-800 font-bold placeholder:text-slate-400 text-sm sm:text-base"
               />
               {inputCity && (
-                <button type="button" onClick={() => handleCityChange('')}>
-                  <X className="w-4 h-4 text-slate-300 hover:text-slate-500" />
+                <button type="button" onClick={() => handleCityChange('')} className="p-1 hover:bg-slate-50 rounded-lg transition-colors">
+                  <X className="w-4 h-4 text-slate-400 hover:text-slate-600" />
                 </button>
               )}
             </div>
 
-            <Button type="submit" className="bg-primary hover:bg-primary/90 text-white font-bold h-[50px] px-8 rounded-xl">
-              Search
-            </Button>
           </form>
 
           {/* Active filter chips */}
@@ -234,102 +231,69 @@ function SearchPage() {
 
           {/* ── Sidebar ─────────────────────────────────────────────────── */}
           {/* Mobile toggle */}
-          <div className="flex items-center gap-3 lg:hidden">
+          <div className="flex items-center justify-between lg:hidden mb-4">
             <button
-              onClick={() => setMobileSidebarOpen(v => !v)}
-              className="flex items-center gap-2 text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-xl px-4 py-2.5 shadow-sm"
+              onClick={() => setMobileSidebarOpen(true)}
+              className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-slate-700 bg-white border border-slate-200 rounded-2xl px-5 py-3 shadow-sm active:scale-95 transition-all"
             >
-              <SlidersHorizontal className="w-4 h-4" />
+              <SlidersHorizontal className="w-4 h-4 text-indigo-600" />
               Filters
-              {hasActiveFilters && <span className="w-2 h-2 bg-primary rounded-full" />}
+              {hasActiveFilters && <div className="w-2 h-2 bg-indigo-600 rounded-full ml-1 animate-pulse" />}
             </button>
-            <span className="text-sm text-slate-400 font-medium">{result.total} events found</span>
+            <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{result.total} events found</span>
           </div>
 
-          <aside className={`lg:w-72 shrink-0 ${mobileSidebarOpen ? 'block' : 'hidden'} lg:block`}>
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 sticky top-6">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="font-bold text-slate-900 flex items-center gap-2">
-                  <SlidersHorizontal className="w-4 h-4 text-primary" />
-                  Filters
-                </h3>
-                {hasActiveFilters && (
-                  <button
-                    onClick={clearAll}
-                    className="flex items-center gap-1.5 text-xs font-bold text-primary hover:opacity-80"
+          {/* Mobile Sidebar Overlay */}
+          {mobileSidebarOpen && (
+            <div className="fixed inset-0 z-[100] lg:hidden">
+              <div 
+                className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300"
+                onClick={() => setMobileSidebarOpen(false)}
+              />
+              <aside className="absolute right-0 top-0 bottom-0 w-[300px] bg-white shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
+                <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                  <h3 className="font-black uppercase tracking-widest text-slate-900 flex items-center gap-2">
+                    <SlidersHorizontal className="w-4 h-4 text-indigo-600" />
+                    Filters
+                  </h3>
+                  <button 
+                    onClick={() => setMobileSidebarOpen(false)}
+                    className="p-2 hover:bg-slate-50 rounded-xl transition-colors"
                   >
-                    Reset <RotateCcw className="w-3 h-3" />
+                    <X className="w-6 h-6 text-slate-400" />
                   </button>
-                )}
-              </div>
+                </div>
+                <div className="flex-1 overflow-y-auto p-6 space-y-8">
+                  <FilterContent 
+                    dateRange={dateRange} 
+                    category={category} 
+                    navigate2={navigate2} 
+                    clearAll={() => { clearAll(); setMobileSidebarOpen(false); }}
+                    hasActiveFilters={hasActiveFilters}
+                  />
+                </div>
+                <div className="p-6 border-t border-slate-100 bg-slate-50">
+                  <Button 
+                    onClick={() => setMobileSidebarOpen(false)}
+                    className="w-full bg-slate-900 hover:bg-indigo-600 text-white font-black uppercase tracking-widest h-14 rounded-2xl shadow-lg"
+                  >
+                    Show {result.total} Events
+                  </Button>
+                </div>
+              </aside>
+            </div>
+          )}
 
-              <div className="space-y-7">
-                {/* Date Range */}
-                <FilterSection title="Date Range">
-                  <div className="space-y-3">
-                    {DATE_RANGE_OPTIONS.map(opt => (
-                      <label key={opt.value} className="flex items-center gap-3 cursor-pointer group">
-                        <div
-                          onClick={() => navigate2({ dateRange: opt.value !== 'any' ? opt.value : undefined })}
-                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all cursor-pointer
-                            ${(dateRange ?? 'any') === opt.value
-                              ? 'border-primary'
-                              : 'border-slate-200 group-hover:border-slate-300'}`}
-                        >
-                          {(dateRange ?? 'any') === opt.value && (
-                            <div className="w-2.5 h-2.5 bg-primary rounded-full" />
-                          )}
-                        </div>
-                        <span
-                          onClick={() => navigate2({ dateRange: opt.value !== 'any' ? opt.value : undefined })}
-                          className={`text-sm font-medium cursor-pointer ${(dateRange ?? 'any') === opt.value ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-700'}`}
-                        >
-                          {opt.label}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </FilterSection>
-
-                {/* Category checkboxes */}
-                <FilterSection title="Category">
-                  <div className="space-y-3">
-                    {CATEGORY_TABS.slice(1).map(cat => {
-                      // category is comma-separated in URL
-                      const activeCats = (category && category !== 'all') ? category.split(',') : []
-                      const isChecked = activeCats.includes(cat.value)
-
-                      function toggleCat() {
-                        let next: string[]
-                        if (isChecked) {
-                          next = activeCats.filter(c => c !== cat.value)
-                        } else {
-                          next = [...activeCats, cat.value]
-                        }
-                        navigate2({ category: next.length ? next.join(',') : undefined })
-                      }
-
-                      return (
-                        <label key={cat.value} className="flex items-center gap-3 cursor-pointer group" onClick={toggleCat}>
-                          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all
-                            ${isChecked ? 'border-primary bg-primary' : 'border-slate-200 group-hover:border-slate-300'}`}
-                          >
-                            {isChecked && (
-                              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                              </svg>
-                            )}
-                          </div>
-                          <span className={`text-sm font-medium capitalize ${isChecked ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-700'}`}>
-                            {cat.label}
-                          </span>
-                        </label>
-                      )
-                    })}
-                  </div>
-                </FilterSection>
-              </div>
+          {/* Desktop Sidebar */}
+          <aside className="lg:w-80 shrink-0 hidden lg:block">
+            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8 sticky top-24">
+              <FilterContent 
+                dateRange={dateRange} 
+                category={category} 
+                navigate2={navigate2} 
+                clearAll={clearAll}
+                hasActiveFilters={hasActiveFilters}
+              />
             </div>
           </aside>
 
@@ -469,6 +433,104 @@ function SearchPage() {
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
+
+function FilterContent({ 
+  dateRange, 
+  category, 
+  navigate2, 
+  clearAll, 
+  hasActiveFilters 
+}: { 
+  dateRange: string | undefined; 
+  category: string | undefined; 
+  navigate2: (params: any) => void; 
+  clearAll: () => void;
+  hasActiveFilters: boolean;
+}) {
+  return (
+    <>
+      <div className="flex items-center justify-between mb-8">
+        <h3 className="font-black uppercase tracking-widest text-slate-900 flex items-center gap-2 text-[10px]">
+          General Filters
+        </h3>
+        {hasActiveFilters && (
+          <button
+            onClick={clearAll}
+            className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:opacity-80"
+          >
+            Reset <RotateCcw className="w-3 h-3" />
+          </button>
+        )}
+      </div>
+
+      <div className="space-y-10">
+        {/* Date Range */}
+        <FilterSection title="Date Range">
+          <div className="space-y-4 pt-2">
+            {DATE_RANGE_OPTIONS.map(opt => (
+              <label key={opt.value} className="flex items-center gap-3 cursor-pointer group">
+                <div
+                  onClick={() => navigate2({ dateRange: opt.value !== 'any' ? opt.value : undefined })}
+                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all cursor-pointer
+                    ${(dateRange ?? 'any') === opt.value
+                      ? 'border-indigo-600 bg-indigo-50'
+                      : 'border-slate-200 group-hover:border-slate-300'}`}
+                >
+                  {(dateRange ?? 'any') === opt.value && (
+                    <div className="w-2.5 h-2.5 bg-indigo-600 rounded-full" />
+                  )}
+                </div>
+                <span
+                  onClick={() => navigate2({ dateRange: opt.value !== 'any' ? opt.value : undefined })}
+                  className={`text-sm font-bold cursor-pointer ${(dateRange ?? 'any') === opt.value ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-700'}`}
+                >
+                  {opt.label}
+                </span>
+              </label>
+            ))}
+          </div>
+        </FilterSection>
+
+        {/* Category checkboxes */}
+        <FilterSection title="Category">
+          <div className="space-y-4 pt-2">
+            {CATEGORY_TABS.slice(1).map(cat => {
+              const activeCats = (category && category !== 'all') ? category.split(',') : []
+              const isChecked = activeCats.includes(cat.value)
+
+              function toggleCat() {
+                let next: string[]
+                if (isChecked) {
+                  next = activeCats.filter(c => c !== cat.value)
+                } else {
+                  next = [...activeCats, cat.value]
+                }
+                navigate2({ category: next.length ? next.join(',') : undefined })
+              }
+
+              return (
+                <label key={cat.value} className="flex items-center gap-3 cursor-pointer group" onClick={toggleCat}>
+                  <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all
+                    ${isChecked ? 'border-indigo-600 bg-indigo-600' : 'border-slate-200 group-hover:border-slate-300'}`}
+                  >
+                    {isChecked && (
+                      <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                  <span className={`text-sm font-bold capitalize ${isChecked ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-700'}`}>
+                    {cat.label}
+                  </span>
+                </label>
+              )
+            })}
+          </div>
+        </FilterSection>
+      </div>
+    </>
+  )
+}
 
 function FilterSection({ title, children }: { title: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(true)

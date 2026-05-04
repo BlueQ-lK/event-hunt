@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { 
   User, 
@@ -34,6 +34,7 @@ const defaultPreferences = {
 }
 
 import { z } from 'zod'
+import { getSession } from '#/lib/auth.functions'
 
 const profileSearchSchema = z.object({
   tab: z.enum(['interested', 'settings', 'manage']).optional().default('interested'),
@@ -41,7 +42,14 @@ const profileSearchSchema = z.object({
 
 export const Route = createFileRoute('/profile')({
   validateSearch: profileSearchSchema,
-  component: ProfilePage
+  component: ProfilePage,
+  beforeLoad: async () => {
+    const session = await getSession();
+    if(!session){
+      throw redirect({to: "/login"})
+    }
+    return { user: session.user };
+  }
 })
 
 function ProfilePage() {
@@ -106,44 +114,47 @@ function ProfilePage() {
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row gap-10">
+        <div className="flex flex-col md:flex-row gap-8 lg:gap-12">
           
-          {/* Compact Sidebar Navigation */}
+          {/* User Profile Header (Mobile Only) / Sidebar (Desktop) */}
           <aside className="w-full md:w-64 shrink-0">
-            <div className="flex items-center gap-3 mb-8 px-2">
-              <Avatar className="w-12 h-12 border border-slate-100 shadow-sm">
+            <div className="flex items-center md:flex-col md:items-start gap-4 md:gap-3 mb-6 md:mb-8 px-2">
+              <Avatar className="w-14 h-14 md:w-16 md:h-16 border-2 border-white shadow-md ring-1 ring-slate-100">
                 <AvatarImage src={session?.user.image ?? ''} />
-                <AvatarFallback className="bg-slate-900 text-white text-xs font-bold">{userAvatar}</AvatarFallback>
+                <AvatarFallback className="bg-slate-900 text-white text-sm font-bold">{userAvatar}</AvatarFallback>
               </Avatar>
-              <div className="min-w-0">
-                <h2 className="text-sm font-bold text-slate-900 truncate">{userName}</h2>
-                <p className="text-[11px] text-slate-400 truncate">{userEmail}</p>
+              <div className="min-w-0 md:mt-2">
+                <h2 className="text-base md:text-lg font-bold text-slate-900 truncate leading-tight">{userName}</h2>
+                <p className="text-xs text-slate-500 truncate">{userEmail}</p>
               </div>
             </div>
 
-            <nav className="space-y-1">
-              {[
-                { id: 'interested', label: 'Interested', icon: Heart },
-                { id: 'settings', label: 'Settings', icon: Settings },
-                { id: 'manage', label: 'Manage Events', icon: BarChart3 },
-              ].map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => handleTabChange(item.id)}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                    tab === item.id 
-                      ? 'bg-slate-100 text-slate-900' 
-                      : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <item.icon className={`w-4 h-4 ${tab === item.id ? 'text-primary' : 'text-slate-400'}`} />
-                    {item.label}
-                  </div>
-                  {tab === item.id && <ChevronRight className="w-3 h-3 text-slate-400" />}
-                </button>
-              ))}
-            </nav>
+            {/* Navigation - Horizontal on Mobile, Vertical on Desktop */}
+            <div className="relative">
+              <nav className="flex md:flex-col items-center gap-1 overflow-x-auto pb-2 md:pb-0 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+                {[
+                  { id: 'interested', label: 'Interested', icon: Heart },
+                  { id: 'settings', label: 'Settings', icon: Settings },
+                  { id: 'manage', label: 'Manage Events', icon: BarChart3 },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => handleTabChange(item.id)}
+                    className={`flex-none md:w-full flex items-center justify-between px-4 md:px-3 py-2.5 md:py-2 rounded-full md:rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+                      tab === item.id 
+                        ? 'bg-slate-900 text-white md:bg-slate-100 md:text-slate-900' 
+                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <item.icon className={`w-4 h-4 ${tab === item.id ? 'text-white md:text-primary' : 'text-slate-400'}`} />
+                      {item.label}
+                    </div>
+                    {tab === item.id && <ChevronRight className="hidden md:block w-3 h-3 text-slate-400" />}
+                  </button>
+                ))}
+              </nav>
+            </div>
           </aside>
 
           {/* Main Content: High Density */}
@@ -160,11 +171,23 @@ function ProfilePage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                   {eventsLoading ? (
-                    <div className="col-span-full py-10 text-center text-xs text-slate-400">Loading...</div>
+                    <div className="col-span-full py-20 text-center">
+                      <div className="inline-block w-6 h-6 border-2 border-slate-200 border-t-slate-900 rounded-full animate-spin mb-2" />
+                      <p className="text-xs text-slate-400">Finding your plans...</p>
+                    </div>
                   ) : interestedEvents.length === 0 ? (
-                    <div className="col-span-full py-10 text-center text-xs text-slate-400">No events found.</div>
+                    <div className="col-span-full py-20 text-center bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-100">
+                      <div className="bg-white w-12 h-12 rounded-full shadow-sm flex items-center justify-center mx-auto mb-4">
+                        <CalendarSync className="w-6 h-6 text-slate-300" />
+                      </div>
+                      <h4 className="text-sm font-bold text-slate-900 mb-1">No events saved yet</h4>
+                      <p className="text-xs text-slate-400 mb-6 max-w-[200px] mx-auto">Discover and save events you're interested in to see them here.</p>
+                      <Button variant="outline" size="sm" className="rounded-full h-8 px-6 text-[11px]" onClick={() => navigate({ to: '/search' })}>
+                        Explore Events
+                      </Button>
+                    </div>
                   ) : (
                     interestedEvents.map(event => <EventCard key={event.id} event={event} />)
                   )}
@@ -180,15 +203,15 @@ function ProfilePage() {
                     <CardTitle className="text-xs font-bold uppercase tracking-wider text-slate-400">Communication</CardTitle>
                   </CardHeader>
                   <CardContent className="p-0 divide-y divide-slate-50">
-                    <div className="flex items-center justify-between p-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 gap-4">
                       <div className="space-y-0.5">
                         <Label className="text-xs font-bold text-slate-800">Email Address</Label>
                         <p className="text-[11px] text-slate-500">{userEmail}</p>
                       </div>
-                      <Button variant="outline" size="sm" className="h-8 text-[11px] px-4 rounded-lg">Change</Button>
+                      <Button variant="outline" size="sm" className="h-8 text-[11px] px-4 rounded-lg w-fit">Change</Button>
                     </div>
 
-                    <div className="flex items-center justify-between p-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 gap-4">
                       <div className="space-y-0.5">
                         <Label className="text-xs font-bold text-slate-800">Newsletter Digest</Label>
                         <p className="text-[11px] text-slate-500">Scheduled for {preferences.newsletterTime}</p>
@@ -196,7 +219,7 @@ function ProfilePage() {
                       <Input 
                         type="time" 
                         value={preferences.newsletterTime} 
-                        className="w-28 h-8 text-[11px] rounded-lg"
+                        className="w-full sm:w-28 h-8 text-[11px] rounded-lg"
                         onChange={(e) => setPreferences({...preferences, newsletterTime: e.target.value})}
                       />
                     </div>

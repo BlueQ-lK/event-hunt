@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Heart, LayoutDashboard, PlusCircle, HelpCircle, Settings, Navigation as NavIcon, Loader2 } from 'lucide-react'
+import { Heart, LayoutDashboard, PlusCircle, HelpCircle, Settings, Navigation as NavIcon, Loader2, Menu, X } from 'lucide-react'
 import { getMyInterestedEvents } from '@/server/events'
 import { useEffect, useState } from 'react'
 import { Badge } from './ui/badge'
@@ -37,6 +37,7 @@ export function Navigation() {
   const [isLocationDialogOpen, setIsLocationDialogOpen] = useState(false)
   const [manualCity, setManualCity] = useState('')
   const [isLocating, setIsLocating] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     if (session?.user) {
@@ -110,8 +111,8 @@ export function Navigation() {
   }
 
   return (
-   <nav className="fixed top-0 z-50 w-full px-6 bg-white pt-4">
-      <div className=" mx-auto flex items-center justify-between  px-6 py-2.5 rounded-2xl border-b-2">
+    <nav className="fixed top-0 z-50 w-full px-4 sm:px-6 pt-4 pointer-events-none">
+      <div className="mx-auto flex items-center justify-between px-4 sm:px-6 py-2.5 rounded-2xl border border-slate-100 bg-white/90 backdrop-blur-md shadow-sm pointer-events-auto">
         
         {/* Left: Brand & Links */}
         <div className="flex items-center gap-10">
@@ -121,7 +122,7 @@ export function Navigation() {
                 <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z" />
               </svg>
             </div>
-            <span className="text-lg font-black tracking-tighter text-slate-900">EventHunt.</span>
+            <span className="text-base sm:text-lg font-black tracking-tighter text-slate-900">EventHunt.</span>
           </Link>
 
           <div className="hidden lg:flex items-center gap-6 text-[13px] font-bold uppercase tracking-wider text-slate-500">
@@ -156,15 +157,23 @@ export function Navigation() {
           </Link>
 
           {/* Primary Action */}
-          <Link to="/manage/create" className="ml-2">
-            <Button className="bg-slate-900 hover:bg-indigo-600 text-white text-xs font-black uppercase tracking-widest rounded-xl px-5 h-10 shadow-lg shadow-slate-900/10 transition-all active:scale-95">
-              <Plus className="w-4 h-4 mr-2" />
-              Create
+          <Link to="/manage/create" className="ml-1 sm:ml-2">
+            <Button className="bg-slate-900 hover:bg-indigo-600 text-white text-[10px] sm:text-xs font-black uppercase tracking-widest rounded-xl px-3 sm:px-5 h-9 sm:h-10 shadow-lg shadow-slate-900/10 transition-all active:scale-95">
+              <Plus className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Create</span>
             </Button>
           </Link>
 
-          {/* User Profile */}
-          <div className="ml-2 pl-3 border-l border-slate-100">
+          {/* Mobile Menu Trigger */}
+          <button 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="lg:hidden p-2 ml-1 text-slate-600 hover:bg-slate-100 rounded-xl transition-all"
+          >
+            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+
+          {/* User Profile - Hidden on mobile, moved to drawer */}
+          <div className="ml-2 pl-3 border-l border-slate-100 hidden lg:block">
             {isPending ? (
               <div className="w-9 h-9 rounded-xl bg-slate-100 animate-pulse" />
             ) : session?.user ? (
@@ -261,9 +270,129 @@ export function Navigation() {
                 <Button variant="ghost" className="text-sm font-semibold">Login</Button>
               </Link>
             )}
-          </div>
         </div>
       </div>
+    </div>
+
+      {/* Mobile Menu Overlay & Drawer */}
+      {isMobileMenuOpen && (
+        <>
+          <div 
+            className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm lg:hidden z-[-1] pointer-events-auto"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+          <div className="lg:hidden absolute top-[calc(100%+12px)] left-0 right-0 bg-white border border-slate-100 rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-top-2 duration-200 max-h-[80vh] overflow-y-auto pointer-events-auto">
+          <div className="p-4 space-y-6">
+            {/* User Info (Mobile) */}
+            {session?.user ? (
+              <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl">
+                <Avatar className="w-12 h-12 border-2 border-white shadow-sm">
+                  <AvatarImage src={session.user.image || undefined} />
+                  <AvatarFallback className="bg-indigo-600 text-white font-bold">{session.user.name[0]}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-bold text-slate-900">{session.user.name}</p>
+                  <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Member</p>
+                </div>
+              </div>
+            ) : (
+              <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-12 font-bold">
+                  Sign In to EventHunt
+                </Button>
+              </Link>
+            )}
+
+            {/* Location Picker (Mobile) */}
+            <button 
+              onClick={() => {
+                setIsLocationDialogOpen(true)
+                setIsMobileMenuOpen(false)
+              }}
+              className="w-full flex items-center justify-between p-4 bg-indigo-50/50 border border-indigo-100 rounded-xl group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-white rounded-lg shadow-sm">
+                  <MapPin className="w-4 h-4 text-indigo-600" />
+                </div>
+                <div className="text-left">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Your Location</p>
+                  <p className="text-sm font-bold text-slate-900 capitalize">{activeCity.replace(/-/g, ' ')}</p>
+                </div>
+              </div>
+              <ChevronDown className="w-4 h-4 text-slate-400" />
+            </button>
+
+            {/* Nav Links (Mobile) */}
+            <div className="grid grid-cols-1 gap-2">
+              <Link 
+                to="/$city/all" 
+                params={{ city: activeCity }} 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 font-bold text-slate-700"
+              >
+                <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
+                  <NavIcon className="w-4 h-4 text-slate-500" />
+                </div>
+                Home
+              </Link>
+              <Link 
+                to="/search" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 font-bold text-slate-700"
+              >
+                <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
+                  <Search className="w-4 h-4 text-slate-500" />
+                </div>
+                Explore Events
+              </Link>
+              {session?.user && (
+                <>
+                  <Link 
+                    to="/profile" 
+                    search={{ tab: 'interested' }}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 font-bold text-slate-700"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center">
+                      <Heart className="w-4 h-4 text-rose-500" />
+                    </div>
+                    My Favorites
+                  </Link>
+                  <Link 
+                    to="/profile" 
+                    search={{ tab: 'manage' }}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 font-bold text-slate-700"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
+                      <LayoutDashboard className="w-4 h-4 text-indigo-500" />
+                    </div>
+                    My Events
+                  </Link>
+                </>
+              )}
+            </div>
+
+            {/* Footer Actions (Mobile) */}
+            <div className="pt-4 border-t border-slate-100">
+              {session?.user && (
+                <button 
+                  onClick={() => {
+                    handleLogout()
+                    setIsMobileMenuOpen(false)
+                  }}
+                  className="w-full flex items-center justify-center gap-2 p-3 text-red-600 font-bold hover:bg-red-50 rounded-xl transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </>
+    )}
 
   <Dialog open={isLocationDialogOpen} onOpenChange={setIsLocationDialogOpen}>
   <DialogContent className="sm:max-w-[340px] p-0 overflow-hidden border border-slate-200 shadow-xl rounded-2xl">

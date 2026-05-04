@@ -212,22 +212,22 @@ export function ManageEvents() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Manage Events</h1>
-          <p className="text-muted-foreground">
-            Monitor and manage your hosted events and their performance.
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">Manage Events</h1>
+          <p className="text-sm text-slate-500">
+            Monitor and manage your hosted events and performance.
           </p>
         </div>
-        <Button asChild className="w-full md:w-auto gap-2">
+        <Button asChild className="w-full sm:w-auto gap-2 rounded-xl shadow-sm">
           <Link to="/manage/create">
-            <Plus className="size-4" /> Create New Event
+            <Plus className="size-4" /> Create Event
           </Link>
         </Button>
       </div>
 
       {/* Analytics Section */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <Card className="bg-primary/5 border-primary/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Events</CardTitle>
@@ -343,16 +343,17 @@ export function ManageEvents() {
                 {loadError}
               </div>
             )}
-            <div className="rounded-md border overflow-hidden">
-              <div className="overflow-x-auto">
+            <div className="rounded-xl border border-slate-100 overflow-hidden bg-white shadow-sm">
+              {/* Desktop View - Table */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-muted/50 border-b">
+                  <thead className="bg-slate-50/50 border-b border-slate-100">
                     {table.getHeaderGroups().map((headerGroup) => (
                       <tr key={headerGroup.id}>
                         {headerGroup.headers.map((header) => (
                           <th
                             key={header.id}
-                            className="h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap"
+                            className="h-11 px-4 text-left align-middle font-semibold text-slate-500 whitespace-nowrap uppercase text-[10px] tracking-wider"
                           >
                             {header.isPlaceholder
                               ? null
@@ -365,18 +366,19 @@ export function ManageEvents() {
                       </tr>
                     ))}
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-slate-50">
                     {isLoading ? (
                       <tr>
-                        <td colSpan={columns.length} className="h-24 text-center">
-                          Loading events...
+                        <td colSpan={columns.length} className="h-24 text-center text-slate-400">
+                          <div className="inline-block w-5 h-5 border-2 border-slate-200 border-t-slate-800 rounded-full animate-spin mb-2" />
+                          <p>Loading events...</p>
                         </td>
                       </tr>
                     ) : table.getRowModel().rows?.length ? (
                       table.getRowModel().rows.map((row) => (
                         <tr
                           key={row.id}
-                          className="border-b transition-colors hover:bg-muted/30 data-[state=selected]:bg-muted"
+                          className="transition-colors hover:bg-slate-50/50"
                         >
                           {row.getVisibleCells().map((cell) => (
                             <td
@@ -395,14 +397,75 @@ export function ManageEvents() {
                       <tr>
                         <td
                           colSpan={columns.length}
-                          className="h-24 text-center"
+                          className="h-32 text-center text-slate-400"
                         >
-                          No events found.
+                          No events found in this category.
                         </td>
                       </tr>
                     )}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile View - Cards */}
+              <div className="md:hidden divide-y divide-slate-50">
+                {isLoading ? (
+                  <div className="p-8 text-center text-slate-400">
+                    <div className="inline-block w-5 h-5 border-2 border-slate-200 border-t-slate-800 rounded-full animate-spin mb-2" />
+                    <p className="text-xs">Loading events...</p>
+                  </div>
+                ) : table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <div key={row.id} className="p-4 space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div className="flex flex-col gap-1">
+                          <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 uppercase w-fit font-bold tracking-tight">
+                            {row.original.category}
+                          </Badge>
+                          <h4 className="font-bold text-slate-900 leading-tight">
+                            {row.original.title}
+                          </h4>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon" className="size-8 text-slate-400">
+                            <Edit className="size-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="size-8 text-destructive/70">
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-3 pt-1">
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
+                          <Calendar className="size-3 text-slate-400" />
+                          <span>{formatDate(row.original.startDate)}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
+                          <Clock className="size-3 text-slate-400" />
+                          <span>{row.original.startTime}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 col-span-2">
+                          <MapPin className="size-3 text-slate-400 shrink-0" />
+                          <span className="truncate">{row.original.location}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-50 mt-1">
+                        <span className="text-[11px] font-bold text-slate-900">
+                          {row.original.interests} <span className="text-slate-400 font-medium">Interested</span>
+                        </span>
+                        <Button variant="outline" size="sm" className="h-7 text-[10px] px-3 rounded-lg">
+                          View Details
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-12 text-center text-slate-400">
+                    <p className="text-xs italic">No events found.</p>
+                  </div>
+                )}
               </div>
             </div>
           </Tabs>
