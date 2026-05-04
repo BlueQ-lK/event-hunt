@@ -101,7 +101,7 @@ export function ManageEvents() {
           title: item.title,
           startDate: item.startDate,
           startTime: item.startTime,
-          location: item.locationName || item.city || item.address || 'Location to be announced',
+          location: item.city || item.address || 'Location to be announced',
           category: item.category,
           status: getEventStatus(item.startDate, item.endDate),
           interests: item.interestCount,

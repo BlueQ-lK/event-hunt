@@ -1,66 +1,67 @@
 import { Link } from '@tanstack/react-router'
-import { ChevronRight, LayoutGrid, Filter } from 'lucide-react'
+import { ChevronRight, Sparkles, Map } from 'lucide-react'
 import { EventCard } from '@/components/EventCard'
+import { getBestStoredCity, normalizeCitySlug } from '@/lib/location'
 
-type Event = {
-  id: string
-  title: string
-  description: string | null
-  startDate: Date
-  endDate: Date | null
-  startTime: string | null
-  endTime: string | null
-  locationName: string | null
-  address: string | null
-  city: string | null
-  category: string | null
-  bannerImage: string | null
-  brochure: string | null
-  createdAt: Date
+function EmptyState() {
+  return (
+    <div className="py-32 flex flex-col items-center justify-center border border-slate-100 rounded-[2.5rem] bg-slate-50/50">
+      <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-6">
+        <Map className="w-8 h-8 text-slate-300" />
+      </div>
+      <h3 className="text-xl font-black text-slate-900 tracking-tight mb-2">Quiet around here.</h3>
+      <p className="text-slate-500 font-medium">No events found in this area yet.</p>
+    </div>
+  )
 }
 
+export function AllEventsSection({ events, city }: { events: any[]; city?: string }) {
+  const activeCity = normalizeCitySlug(city ?? getBestStoredCity())
+  const cityText = activeCity.replace(/-/g, ' ')
 
-export function AllEventsSection({ events }: { events: Event[] }) {
   return (
-    <section className="py-10">
-      <div className="container-custom">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-          <div>
-            <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">Explore Events</h2>
+    <section className="py-24 bg-white">
+      <div className="container-custom px-6">
+        {/* Header DNA: High Contrast & Serif Accents */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+          <div className="max-w-xl">
+            <span className="inline-flex items-center gap-2 px-3 py-1 mb-4 text-[10px] font-black uppercase tracking-[0.2em] bg-indigo-50 text-indigo-600 rounded-full">
+              <Sparkles className="w-3 h-3" />
+              Weekly Selection
+            </span>
+            
+            <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter leading-none">
+              Featured <span className="text-indigo-600 italic font-serif">Hunt</span>
+            </h2>
+            
+            <p className="text-slate-500 font-medium mt-4 text-lg">
+              Handpicked experiences curated for your week in {cityText}.
+            </p>
           </div>
+
+          <Link 
+            to="/search"
+            search={{ city: activeCity }}
+            className="group flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-2xl font-bold text-sm hover:bg-indigo-600 transition-all shadow-lg shadow-slate-900/10 active:scale-95"
+          >
+            View everything
+            <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+          </Link>
         </div>
 
+        {/* Grid Layout */}
         {events.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center shadow-sm mb-6">
-              <LayoutGrid className="w-8 h-8 text-slate-200" />
-            </div>
-            <p className="text-slate-900 font-bold text-lg">No events found</p>
-            <p className="text-slate-500 text-sm mt-2 max-w-xs mx-auto">We couldn't find any events matching your criteria right now.</p>
-            <button className="mt-8 px-6 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 hover:bg-slate-50 transition-colors">
-              Clear all filters
-            </button>
-          </div>
+          <EmptyState />
         ) : (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-12">
-              {events.map((event) => (
-                <EventCard key={event.id} event={event} />
-              ))}
-            </div>
-            
-            <div className="mt-16 flex justify-center">
-              <Link 
-                to="/search" 
-                className="group flex items-center gap-3 px-8 py-4 bg-white border border-slate-200 rounded-2xl text-slate-900 font-bold hover:border-indigo-600 hover:text-indigo-600 transition-all shadow-sm active:scale-95"
-              >
-                View more events <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </div>
-          </>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-12">
+            {events.map((event) => (
+              <div key={event.id} className="group cursor-pointer">
+                <EventCard event={event} />
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </section>
   )
 }
-

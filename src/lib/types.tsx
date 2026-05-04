@@ -13,4 +13,7 @@ export interface EventForm {
   category?: "tech" | "music" | "sports" | "education" | "business" | "art" | "health" | "food" | "travel" | "other";
   bannerImage?: File | string;
   brochure?: File | string;
+  facebook?: string;
+  instagram?: string;
+  twitter?: string;
 }

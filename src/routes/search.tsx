@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { redirect } from '@tanstack/react-router'
 import { useRef, useTransition, useEffect, useState } from 'react'
 import { searchEvents, searchEventsSchema } from '@/server/events'
 import { Button } from '@/components/ui/button'
@@ -15,12 +16,24 @@ import {
 } from 'lucide-react'
 import { Footer } from '@/components/Footer'
 import { EventCard } from '@/components/EventCard'
+import { getBestStoredCity, normalizeCitySlug } from '@/lib/location'
 
 // ── URL search-param schema ──────────────────────────────────────────────────
 const searchSchema = searchEventsSchema
 
 export const Route = createFileRoute('/search')({
   validateSearch: (raw) => searchSchema.parse(raw),
+  beforeLoad: ({ search }) => {
+    if (search.city === undefined) {
+      throw redirect({
+        to: '/search',
+        search: {
+          ...search,
+          city: getBestStoredCity(),
+        },
+      })
+    }
+  },
   loaderDeps: ({ search }) => search,
   loader: async ({ deps }) => searchEvents({ data: deps }),
   component: SearchPage,
@@ -74,13 +87,16 @@ function SearchPage() {
     page      = 1,
     limit     = 24,
   } = search
+  const cityValue = city ? city.replace(/-/g, ' ') : ''
 
   // Local input state (debounced before pushing to URL)
   const [inputQ, setInputQ] = useState(q)
+  const [inputCity, setInputCity] = useState(cityValue)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Keep local input in sync if URL changes externally (e.g. browser back/forward)
   useEffect(() => { setInputQ(q) }, [q])
+  useEffect(() => { setInputCity(cityValue) }, [cityValue])
 
   // Helper: push new search params to URL (triggers loader)
   function navigate2(params: Partial<typeof search>) {
@@ -104,14 +120,29 @@ function SearchPage() {
     }, 400)
   }
 
+  function handleCityChange(val: string) {
+    setInputCity(val)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      // Normalize but allow empty string so beforeLoad doesn't redirect if explicitly cleared
+      // but wait, if it's empty, maybe we want to keep it as "" in the URL?
+      const normalized = normalizeCitySlug(val, '')
+      navigate2({ city: normalized })
+    }, 400)
+  }
+
   function handleQuerySubmit(e: React.FormEvent) {
     e.preventDefault()
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    navigate2({ q: inputQ || undefined })
+    navigate2({ 
+      q: inputQ || undefined,
+      city: normalizeCitySlug(inputCity, '') || undefined
+    })
   }
 
   function clearAll() {
     setInputQ('')
+    setInputCity(getBestStoredCity())
     navigate2({ q: undefined, category: undefined, dateRange: undefined, city: undefined, sort: undefined, page: 1 })
   }
 
@@ -153,13 +184,13 @@ function SearchPage() {
               <MapPin className="w-5 h-5 text-primary shrink-0" />
               <input
                 type="text"
-                value={city}
-                onChange={(e) => navigate2({ city: e.target.value || undefined })}
+                value={inputCity}
+                onChange={(e) => handleCityChange(e.target.value)}
                 placeholder="City (e.g. Mangalore)"
                 className="flex-1 bg-transparent border-none focus:outline-none text-slate-800 font-medium placeholder:text-slate-400 text-sm"
               />
-              {city && (
-                <button type="button" onClick={() => navigate2({ city: undefined })}>
+              {inputCity && (
+                <button type="button" onClick={() => handleCityChange('')}>
                   <X className="w-4 h-4 text-slate-300 hover:text-slate-500" />
                 </button>
               )}
@@ -184,7 +215,7 @@ function SearchPage() {
                 <FilterChip label={DATE_RANGE_OPTIONS.find(d => d.value === dateRange)?.label ?? dateRange} onRemove={() => navigate2({ dateRange: undefined })} />
               )}
               {city && (
-                <FilterChip label={city} onRemove={() => navigate2({ city: undefined })} />
+                <FilterChip label={city} onRemove={() => { setInputCity(''); navigate2({ city: '' }) }} />
               )}
               <button
                 onClick={clearAll}

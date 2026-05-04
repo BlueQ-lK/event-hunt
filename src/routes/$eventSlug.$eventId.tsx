@@ -20,35 +20,78 @@ import {
   CheckCircle2,
   Facebook,
   Twitter,
-  Bookmark
+  Instagram,
+  Bookmark,
+  ExternalLink,
+  Copy,
+  Check,
+  Plus
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { EventCard } from '@/components/EventCard'
 import { Footer } from '@/components/Footer'
-import { getEvent, getEvents } from '@/server/events'
+import { getEvent, getEvents, toggleInterest, getInterestStatus, getInterestCount, getInterestedUsers } from '@/server/events'
+import { Card, CardContent } from '#/components/ui/card'
+import { authClient } from '@/lib/auth-client'
+import { useServerFn } from '@tanstack/react-start'
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+
 
 export const Route = createFileRoute('/$eventSlug/$eventId')({
   loader: async ({ params }) => {
-    const [event, moreEvents] = await Promise.all([
+    const [event, moreEvents, interestCount, interestedUsers] = await Promise.all([
       getEvent({ data: params.eventId }),
-      getEvents()
+      getEvents(),
+      getInterestCount({ data: params.eventId }),
+      getInterestedUsers({ data: params.eventId })
     ])
-    return { event, moreEvents: moreEvents.filter(e => e.id !== params.eventId).slice(0, 4) }
+    return { 
+      event, 
+      moreEvents: moreEvents.filter(e => e.id !== params.eventId).slice(0, 4),
+      initialInterestCount: interestCount,
+      interestedUsers
+    }
   },
   component: EventDetailsPage,
 })
 
 function EventDetailsPage() {
-  const { event, moreEvents } = Route.useLoaderData()
-  const [activeScheduleTab, setActiveScheduleTab] = useState(0)
+  const { event, moreEvents, initialInterestCount, interestedUsers } = Route.useLoaderData()
+  const { data: session } = authClient.useSession()
   
+  const [isInterested, setIsInterested] = useState(false)
+  const [interestCount, setInterestCount] = useState(initialInterestCount)
+  const [isPending, setIsPending] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  const toggleInterestFn = useServerFn(toggleInterest)
+  const getStatusFn = useServerFn(getInterestStatus)
+
+  useEffect(() => {
+    if (session?.user && event) {
+      getStatusFn({ data: { eventId: event.id } }).then(res => {
+        setIsInterested(res.interested)
+      })
+    }
+  }, [session, event, getStatusFn])
+
   if (!event) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6">
-        <h1 className="text-4xl font-bold mb-4">Event Not Found</h1>
+        <h1 className="text-4xl font-bold mb-4 tracking-tight">Event Not Found</h1>
         <p className="text-slate-500 mb-8">The requested event could not be found.</p>
         <Link to="/search">
-          <Button className="bg-primary text-white px-8 h-12 font-bold">
+          <Button className="bg-primary text-white px-8 h-12 font-bold rounded-xl shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95">
             BACK TO SEARCH
           </Button>
         </Link>
@@ -56,277 +99,447 @@ function EventDetailsPage() {
     )
   }
 
-  // Formatting date for hero
-  const startDate = new Date(event.startDate)
-  const month = startDate.toLocaleString('default', { month: 'short' }).toUpperCase()
-  const day = startDate.getDate()
-  const year = startDate.getFullYear()
+  const handleToggleInterest = async () => {
+    if (!session) {
+      // Redirect to login or show alert
+      alert('Please login to express interest')
+      return
+    }
+
+    setIsPending(true)
+    try {
+      const res = await toggleInterestFn({ data: { eventId: event.id } })
+      setIsInterested(res.interested)
+      setInterestCount(prev => res.interested ? prev + 1 : prev - 1)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setIsPending(false)
+    }
+  }
+
+  const handleShare = async () => {
+    const shareData = {
+      title: event.title,
+      text: event.description || '',
+      url: window.location.href,
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData)
+      } catch (err) {
+        console.log('Error sharing:', err)
+      }
+    } else {
+      // Fallback: Copy to clipboard
+      navigator.clipboard.writeText(window.location.href)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  const handleGetDirections = () => {
+    const query = encodeURIComponent(event.address || event.city || "")
+    const url = `https://www.google.com/maps/search/?api=1&query=${query}`
+    window.open(url, '_blank')
+  }
+
+  const locationQuery = encodeURIComponent(event.address || event.city || "")
+  const mapUrl = `https://maps.google.com/maps?q=${locationQuery}&t=&z=13&ie=UTF8&iwloc=&output=embed`;
+
+  const formatTime = (timeStr?: string | null) => {
+    if (!timeStr) return ''
+    const [hours, minutes] = timeStr.split(':')
+    const h = parseInt(hours)
+    const ampm = h >= 12 ? 'PM' : 'AM'
+    const h12 = h % 12 || 12
+    return `${h12}:${minutes} ${ampm}`
+  }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Breadcrumbs */}
-      <div className="bg-white border-b border-slate-100 py-4 px-6">
-        <div className="container-custom flex items-center gap-2 text-xs font-bold text-slate-400">
-          <Link to="/" className="hover:text-primary transition-colors">Home</Link>
-          <ChevronRight className="w-3 h-3" />
-          <Link to="/search" className="hover:text-primary transition-colors">Events</Link>
-          <ChevronRight className="w-3 h-3" />
-          <span className="text-slate-600">{event.title}</span>
+    <div className="min-h-screen bg-white text-slate-900 selection:bg-slate-100">
+
+  <main className="max-w-6xl mx-auto px-6 py-12">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+      
+      {/* Content Area */}
+      <div className="lg:col-span-8 space-y-10">
+        
+        {/* Header Section */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-3">
+            <span className="text-[11px] font-bold tracking-widest uppercase text-primary">
+              {event.category}
+            </span>
+            {interestCount > 5 && (
+              <span className="text-[11px] font-medium text-emerald-600 px-2 py-0.5 bg-emerald-50 rounded">
+                Trending
+              </span>
+            )}
+          </div>
+                  {/* Simplified Hero */}
+        <div className="relative aspect-[16/9] rounded-xl overflow-hidden bg-slate-50">
+          {event.bannerImage ? (
+            <img src={event.bannerImage} alt={event.title} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <Calendar className="w-12 h-12 text-slate-200" />
+            </div>
+          )}
+          <button 
+            onClick={handleToggleInterest}
+            disabled={isPending}
+            className={`absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+              isInterested ? 'bg-red-500 text-white' : 'bg-white/90 text-slate-600 hover:bg-white'
+            }`}
+          >
+            <Heart className={`w-5 h-5 ${isInterested ? 'fill-current' : ''}`} />
+          </button>
         </div>
+          <h1 className="text-4xl md:text-5xl font-semibold tracking-tight leading-tight">
+            {event.title}
+          </h1>
+          <div className="flex items-center gap-2 text-slate-500">
+            <span className="text-sm">Posted by</span>
+            <span className="text-sm font-semibold text-slate-900 underline underline-offset-4 cursor-pointer">
+              {event.organizerName || 'Anonymous Organizer'}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4">
+            <Button 
+              onClick={handleToggleInterest}
+              disabled={isPending}
+              className={`h-12 rounded-xl text-sm font-semibold transition-all ${
+                isInterested 
+                  ? 'bg-slate-100 text-slate-900 hover:bg-slate-200' 
+                  : 'bg-black text-white hover:bg-slate-800'
+              }`}
+            >
+              <Heart className={`w-4 h-4 mr-2 ${isInterested ? 'fill-current text-red-500' : ''}`} />
+              {isInterested ? 'Interested' : "I'm Interested"}
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleShare}
+              className="h-12 rounded-xl border-slate-200 text-sm font-semibold"
+            >
+              <Share2 className="w-4 h-4 mr-2" />
+              Share Event
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                const start = new Date(event.startDate).toISOString().replace(/-|:|\.\d\d\d/g, "");
+                const end = event.endDate ? new Date(event.endDate).toISOString().replace(/-|:|\.\d\d\d/g, "") : start;
+                const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${start}/${end}&details=${encodeURIComponent(event.description || '')}&location=${encodeURIComponent(event.address || event.city || '')}`;
+                window.open(url, '_blank');
+              }}
+              className="h-12 rounded-xl border-slate-200 text-sm font-semibold"
+            >
+              <CalendarPlus className="w-4 h-4 mr-2" />
+              Add to Calendar
+            </Button>
+          </div>
+
+          <div className="space-y-6 pt-6">
+            <div className="flex items-start gap-5 group">
+              {/* Icon with a subtle background */}
+              <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center shrink-0">
+                <Calendar className="w-5 h-5 text-slate-400" />
+              </div>
+
+              <div className="flex-1 space-y-3">
+                {/* Label */}
+                 <p className="text-sm font-bold uppercase tracking-wider text-slate-400">Date & Time</p>
+
+                <div className="flex flex-col gap-3">
+                  {/* Start Date & Time */}
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold text-slate-900 leading-none">
+                        {new Date(event.startDate).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'long' })}
+                      </span>
+                      <span className="text-[13px] text-slate-500 mt-1 font-medium">
+                        Starts at {formatTime(event.startTime)}
+                      </span>
+                    </div>
+
+                    {/* Dash/Connector for Multi-day */}
+                    {event.endDate && (
+                      <div className="h-px w-4 bg-slate-200 mt-[-10px]" />
+                    )}
+
+                    {/* End Date (Only if different from start or specifically multi-day) */}
+                    {event.endDate && (
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-slate-900 leading-none">
+                          {new Date(event.endDate).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'long' })}
+                        </span>
+                        <span className="text-[13px] text-slate-500 mt-1 font-medium">
+                          Ends at {formatTime(event.endTime)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Add to Calendar Action */}
+                  <button
+                    onClick={() => {
+                      const start = new Date(event.startDate).toISOString().replace(/-|:|\.\d\d\d/g, "");
+                      const end = event.endDate ? new Date(event.endDate).toISOString().replace(/-|:|\.\d\d\d/g, "") : start;
+                      const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${start}/${end}&details=${encodeURIComponent(event.description || '')}&location=${encodeURIComponent(event.address || event.city || '')}`;
+                      window.open(url, '_blank');
+                    }}
+                    className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+                  >
+                    Add to calendar
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center shrink-0">
+                <MapPin className="w-5 h-5 text-slate-400" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-bold uppercase tracking-wider text-slate-400">Location</p>
+                <div className="space-y-0.5">
+                  <p className="text-base font-semibold">
+                    {event.address || event.city}
+                  </p>
+                  <button onClick={handleGetDirections} className="text-sm font-medium text-primary hover:underline">
+                    View on map
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+
+        {/* Interested Audience */}
+        {interestCount > 0 && (
+          <div className="flex items-center gap-4 py-6">
+            <div className="flex -space-x-3 overflow-hidden">
+              {interestedUsers.map((user, idx) => {
+                const colors = ['bg-red-100 text-red-600', 'bg-blue-100 text-blue-600', 'bg-emerald-100 text-emerald-600', 'bg-amber-100 text-amber-600', 'bg-purple-100 text-purple-600']
+                const colorClass = colors[idx % colors.length]
+                return (
+                  <Avatar key={user.id} className={`inline-block border-2 border-white h-10 w-10 ${colorClass}`}>
+                    <AvatarFallback className="font-bold">{user.name.charAt(0).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                )
+              })}
+              {interestCount > 4 && (
+                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-slate-100 border-2 border-white text-xs font-bold text-slate-600">
+                  +{interestCount - 4}
+                </div>
+              )}
+            </div> 
+            <p className="text-sm font-semibold text-slate-900 border-2 py-2 px-3 rounded-xl">
+              {interestCount}+ people are interested
+            </p>
+          </div>
+        )}
+
+        {/* Description */}
+        <section className="mt-8">
+          <h2 className="text-2xl font-semibold mb-4">About the event</h2>
+          <div 
+            className="text-slate-600 leading-relaxed rich-text-content"
+            dangerouslySetInnerHTML={{ 
+              __html: event.description || `Join us for ${event.title} in ${event.city}. This event promises to be an exciting experience for all attendees. Don't miss out on this opportunity to connect and engage with others in the community.` 
+            }} 
+          />
+          <style>{`
+            .rich-text-content {
+              font-size: 0.9375rem;
+              line-height: 1.6;
+              color: #334155;
+            }
+            .rich-text-content p {
+              margin-bottom: 1rem;
+            }
+            .rich-text-content ul, .rich-text-content ol {
+              margin-bottom: 1rem;
+              padding-left: 1.5rem;
+            }
+            .rich-text-content ul {
+              list-style-type: disc;
+            }
+            .rich-text-content ol {
+              list-style-type: decimal;
+            }
+            .rich-text-content b, .rich-text-content strong {
+              font-weight: 700;
+            }
+            .rich-text-content i, .rich-text-content em {
+              font-style: italic;
+            }
+            .rich-text-content u {
+              text-decoration: underline;
+            }
+          `}</style>
+        </section>
+
+        {/* Minimal Map */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Location</h2>
+            <button onClick={handleGetDirections} className="text-sm font-medium text-primary hover:underline">
+              Get Directions
+            </button>
+          </div>
+          <div 
+            className="h-64 rounded-xl overflow-hidden bg-slate-100 transition-all cursor-pointer border border-slate-100"
+            onClick={handleGetDirections}
+          >
+           <iframe
+              title="Event Location"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              loading="lazy"
+              allowFullScreen
+              referrerPolicy="no-referrer-when-downgrade"
+              src={mapUrl}
+            />
+          </div>
+        </section>
+        {/* FAQ Section */}
+        <section className="space-y-6 pt-8 border-t border-slate-100">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-semibold">Frequently Asked Questions</h2>
+            <button className="text-sm font-bold text-red-500 hover:text-red-600 flex items-center gap-2">
+              <Flag className="w-4 h-4" />
+              Report event
+            </button>
+          </div>
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="item-1" className="border-slate-100">
+              <AccordionTrigger className="text-sm font-semibold hover:no-underline">Is there a registration fee?</AccordionTrigger>
+              <AccordionContent className="text-slate-500 text-sm">
+                Please check the event details or contact the organizer for pricing information. Most events listed are free or have transparent pricing.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-2" className="border-slate-100">
+              <AccordionTrigger className="text-sm font-semibold hover:no-underline">How do I reach the venue?</AccordionTrigger>
+              <AccordionContent className="text-slate-500 text-sm">
+                You can use the "View on map" link in the location section to get exact directions from your current location.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-3" className="border-slate-100">
+              <AccordionTrigger className="text-sm font-semibold hover:no-underline">Can I bring a guest?</AccordionTrigger>
+              <AccordionContent className="text-slate-500 text-sm">
+                This depends on the event capacity. We recommend sharing the event link with your friends so they can also mark their interest!
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </section>
+
+        
       </div>
 
-      <div className="container-custom py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
-          {/* Main Content (Left) */}
-          <div className="lg:col-span-8 space-y-8">
-            
-            {/* Hero Gallery */}
-            <div className="relative rounded-3xl overflow-hidden bg-white shadow-sm border border-slate-100 group">
-              <div className="relative aspect-[16/9]">
-                {event.bannerImage ? (
-                  <img 
-                    src={event.bannerImage} 
-                    alt={event.title} 
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-slate-200 flex items-center justify-center">
-                    <Calendar className="w-20 h-20 text-slate-400" />
-                  </div>
-                )}
+      {/* Sidebar - Clean Sticky */}
+      <aside className="lg:col-span-4">
+        <div className=" space-y-6">
+          <div className="p-8 rounded-2xl border border-slate-100 bg-white">
+            <div className="mb-6">
+              <p className="text-sm font-medium text-slate-500 mb-1">Status</p>
+              {(() => {
+                const now = new Date()
+                const start = new Date(event.startDate)
+                const end = event.endDate ? new Date(event.endDate) : null
                 
-                {/* Overlay Elements */}
-                <div className="absolute top-6 left-6 bg-white/90 backdrop-blur-md rounded-2xl p-3 px-4 text-center shadow-lg border border-white/20">
-                  <div className="text-[10px] font-black text-slate-400 uppercase leading-none">{month}</div>
-                  <div className="text-2xl font-black text-slate-800 leading-none mt-1">{day}</div>
-                  <div className="text-[10px] font-bold text-slate-500 mt-1">{year}</div>
-                </div>
+                let statusLabel = 'Upcoming'
+                let statusColor = 'bg-emerald-500'
+                
+                if (end && now > end) {
+                  statusLabel = 'Event Ended'
+                  statusColor = 'bg-slate-300'
+                } else if (now >= start) {
+                  statusLabel = 'Live Now'
+                  statusColor = 'bg-red-500 animate-pulse'
+                }
 
-                <div className="absolute top-6 right-6 flex gap-3">
-                  <button className="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center text-slate-400 hover:text-red-500 transition-all">
-                    <Heart className="w-5 h-5" />
-                  </button>
-                  <button className="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center text-slate-400 hover:text-primary transition-all">
-                    <Share2 className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <button className="absolute left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all hover:bg-black/40">
-                  <ChevronLeft className="w-6 h-6" />
-                </button>
-                <button className="absolute right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all hover:bg-black/40">
-                  <ChevronRight className="w-6 h-6" />
-                </button>
-              </div>
-
-              {/* Thumbnails */}
-              <div className="p-6 flex gap-3 overflow-x-auto scrollbar-hide">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className={`relative w-24 h-16 rounded-xl overflow-hidden shrink-0 cursor-pointer border-2 transition-all ${i === 1 ? 'border-primary' : 'border-transparent'}`}>
-                    {event.bannerImage ? (
-                      <img src={event.bannerImage} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-slate-100" />
-                    )}
-                    {i === 5 && (
-                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white font-bold text-sm">
-                        +8
-                      </div>
-                    )}
+                return (
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${statusColor}`} />
+                    <p className="text-xl font-semibold">{statusLabel}</p>
                   </div>
-                ))}
-              </div>
+                )
+              })()}
             </div>
-
-            {/* About the Event */}
-            <div className="bg-white rounded-3xl p-10 border border-slate-100 shadow-sm">
-              <h2 className="text-2xl font-black text-slate-800 mb-6">About the Event</h2>
-              <p className="text-slate-500 font-medium leading-relaxed mb-10">
-                {event.description || `The ${event.title} is a significant cultural and spiritual festival celebrated with devotion and grandeur. The festival includes traditional rituals, processions, poojas, cultural programs, and community feasts.`}
+            
+            <div className="space-y-4">
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <p className="text-sm font-medium text-slate-600">Want to join this event?</p>
+                <p className="text-xs text-slate-400 mt-1">Mark your interest to stay updated with any changes or announcements.</p>
+              </div>
+              <p className="text-center text-xs font-medium text-slate-400 uppercase tracking-widest">
+                {interestCount} People Interested
               </p>
-
-              {/* Highlights */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-10 border-t border-slate-50">
-                {[
-                  { icon: Lock, label: 'Traditional Rituals', sub: 'Special poojas and homams' },
-                  { icon: Globe, label: 'Cultural Programs', sub: 'Dance, music and folk performances' },
-                  { icon: Building2, label: 'Community Feast', sub: 'Anna dana and prasadam distribution' },
-                  { icon: Clock, label: 'Devotional Procession', sub: 'Rathotsava and pallakki seva' },
-                ].map((item, idx) => (
-                  <div key={idx} className="flex flex-col items-center text-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-primary/5 flex items-center justify-center text-primary border border-primary/10">
-                      <item.icon className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-black text-slate-800">{item.label}</h4>
-                      <p className="text-[10px] text-slate-400 font-medium mt-1">{item.sub}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
-
-            {/* Location Section */}
-            <div className="bg-white rounded-3xl p-10 border border-slate-100 shadow-sm">
-              <h2 className="text-2xl font-black text-slate-800 mb-6">Location</h2>
-              <p className="text-sm font-bold text-slate-500 mb-6">{event.locationName || event.city || event.address || 'Location to be announced'}</p>
-              
-              <div className="rounded-2xl overflow-hidden border border-slate-100 mb-6">
-                <div className="h-[300px] bg-slate-100 relative">
-                   <img src="https://images.unsplash.com/photo-1526772662000-3f88f10405ff?auto=format&fit=crop&q=80&w=1200" alt="Map Placeholder" className="w-full h-full object-cover opacity-50" />
-                   <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white shadow-2xl border-4 border-white animate-bounce">
-                        <MapPin className="w-6 h-6" />
-                      </div>
-                   </div>
-                </div>
-              </div>
-
-              <div className="flex flex-col md:flex-row items-center justify-between p-4 bg-slate-50 rounded-2xl gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-primary shadow-sm border border-slate-100">
-                    <MapPin className="w-5 h-5" />
-                  </div>
-                  <span className="text-xs font-bold text-slate-600">{event.address || event.city || 'Location Details'}</span>
-                </div>
-                <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white font-bold text-xs rounded-xl flex items-center gap-2">
-                   Open in Google Maps <ArrowUpRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-
           </div>
 
-          {/* Sidebar (Right) */}
-          <aside className="lg:col-span-4 space-y-8">
-            
-            {/* Quick Info Panel */}
-            <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex gap-2">
-                  <Badge variant="secondary" className="bg-blue-50 text-blue-600 border-none text-[10px] font-bold px-3 py-1 rounded-full uppercase">{event.category || 'Event'}</Badge>
-                </div>
-                <span className="text-[10px] font-black text-emerald-500 uppercase tracking-wider">Free Event</span>
-              </div>
-
-              <h1 className="text-4xl font-black text-slate-900 mb-8 leading-tight">
-                {event.title}
-              </h1>
-
-              <div className="space-y-6 mb-10">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-primary border border-slate-100 shrink-0">
-                    <MapPin className="w-5 h-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Location</p>
-                    <p className="text-sm font-black text-slate-800 truncate">{event.city || 'Location'}</p>
-                  </div>
-                  <Button size="sm" variant="outline" className="border-primary text-primary text-[10px] font-black rounded-lg h-8">Directions</Button>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-primary border border-slate-100 shrink-0">
-                    <Calendar className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Date</p>
-                    <p className="text-sm font-black text-slate-800">{new Date(event.startDate).toLocaleDateString()}</p>
-                  </div>
-                </div>
-
-                {event.startTime && (
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-primary border border-slate-100 shrink-0">
-                      <Clock className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Time</p>
-                      <p className="text-sm font-black text-slate-800">{event.startTime} onwards</p>
-                    </div>
-                  </div>
+          {/* Event Social Links */}
+          {(event.facebook?.trim() || event.instagram?.trim() || event.twitter?.trim()) && (
+            <div className="p-8 rounded-2xl border border-slate-100 bg-white">
+              <p className="text-sm font-medium text-slate-500 mb-4">Event Links</p>
+              <div className="flex flex-col gap-3">
+                {event.facebook?.trim() && (
+                  <a href={event.facebook} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-sm font-semibold text-slate-600 hover:text-primary transition-colors">
+                    <Facebook className="w-4 h-4" />
+                    Facebook
+                    <ExternalLink className="w-3 h-3 ml-auto opacity-40" />
+                  </a>
+                )}
+                {event.instagram?.trim() && (
+                  <a href={event.instagram} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-sm font-semibold text-slate-600 hover:text-primary transition-colors">
+                    <Instagram className="w-4 h-4" />
+                    Instagram
+                    <ExternalLink className="w-3 h-3 ml-auto opacity-40" />
+                  </a>
+                )}
+                {event.twitter?.trim() && (
+                  <a href={event.twitter} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-sm font-semibold text-slate-600 hover:text-primary transition-colors">
+                    <Twitter className="w-4 h-4" />
+                    X (Twitter)
+                    <ExternalLink className="w-3 h-3 ml-auto opacity-40" />
+                  </a>
                 )}
               </div>
-
-              <p className="text-slate-500 text-sm font-medium leading-relaxed mb-10 line-clamp-3">
-                {event.description}
-              </p>
-
-              {/* Action Buttons Grid */}
-              <div className="grid grid-cols-4 gap-2">
-                {[
-                  { icon: Bookmark, label: 'Save' },
-                  { icon: Share, label: 'Share' },
-                  { icon: CalendarPlus, label: 'Add' },
-                  { icon: Flag, label: 'Report' },
-                ].map((item, idx) => (
-                  <button key={idx} className="flex flex-col items-center gap-2 p-3 rounded-2xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100">
-                    <item.icon className="w-5 h-5 text-slate-400" />
-                    <span className="text-[9px] font-bold text-slate-500 uppercase">{item.label}</span>
-                  </button>
-                ))}
-              </div>
             </div>
+          )}
 
-            {/* Hub Card Detail Placeholder */}
-            <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm overflow-hidden relative">
-              <h3 className="text-lg font-black text-slate-800 mb-6">Organizer (Festival Hub)</h3>
-              <div className="relative h-40 rounded-2xl overflow-hidden mb-6 bg-slate-100 flex items-center justify-center">
-                 <Building2 className="w-12 h-12 text-slate-300" />
-              </div>
-              <h4 className="text-xl font-black text-slate-900 mb-4">Temple Organization</h4>
-              <p className="text-xs text-slate-500 font-medium leading-relaxed mb-8 line-clamp-3">
-                Community-led organization dedicated to preserving cultural heritage and traditions.
-              </p>
-              
-              <Button className="w-full bg-white border border-primary text-primary hover:bg-primary hover:text-white font-black rounded-xl py-6 transition-all">
-                View Festival Hub
-              </Button>
-            </div>
-
-            {/* Share this Event */}
-            <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm">
-              <h3 className="text-lg font-black text-slate-800 mb-6">Share this Event</h3>
-              <div className="flex flex-wrap gap-4">
-                {[
-                  { icon: Facebook, label: 'Facebook', color: 'bg-[#1877F2]' },
-                  { icon: MessageSquare, label: 'WhatsApp', color: 'bg-[#25D366]' },
-                  { icon: Twitter, label: 'Twitter', color: 'bg-[#1DA1F2]' },
-                  { icon: Share2, label: 'Copy Link', color: 'bg-slate-200 text-slate-600' },
-                ].map((item, idx) => (
-                  <button key={idx} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 transition-all border border-slate-100">
-                    <div className={`w-6 h-6 rounded-lg ${item.color} flex items-center justify-center text-white`}>
-                      <item.icon className="w-3.5 h-3.5" />
-                    </div>
-                    <span className="text-[10px] font-bold text-slate-600 uppercase">{item.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-          </aside>
         </div>
-
-        {/* More Events Section */}
-        <div className="mt-24">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-black text-slate-800">More Events</h2>
-            <Link to="/search">
-              <Button variant="ghost" className="text-primary font-bold hover:bg-primary/5">
-                View all events <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {moreEvents.map(e => (
-              <EventCard key={e.id} event={e} />
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <Footer />
+      </aside>
     </div>
+
+    {/* Suggested Events */}
+    {moreEvents.length > 0 && (
+      <section className="mt-24 pt-12 border-t border-slate-100">
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <h2 className="text-2xl font-semibold">More in {event.city}</h2>
+            <p className="text-slate-500 text-sm">Similar experiences you might enjoy.</p>
+          </div>
+          <Link to="/search" className="text-sm font-semibold hover:underline">
+            View all
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {moreEvents.map(e => <EventCard key={e.id} event={e} />)}
+        </div>
+      </section>
+    )}
+  </main>
+  <Footer />
+</div>
   )
 }
+

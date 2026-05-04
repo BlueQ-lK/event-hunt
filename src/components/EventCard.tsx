@@ -121,7 +121,7 @@ export function EventCard({ event }: { event: any }) {
           </h3>
 
           <p className="text-[11px] text-slate-400 font-medium">
-            {event.locationName || event.city || event.address || 'Location to be announced'}
+            {event.city || event.address || 'Location to be announced'}
           </p>
 
           <div className="flex items-center gap-2 pt-1">

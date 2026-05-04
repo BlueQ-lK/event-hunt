@@ -9,15 +9,16 @@ export type LocationCache = {
   lng?: number;
 };
 
-export const normalizeCitySlug = (value?: string | null) => {
-  if (!value) return DEFAULT_CITY;
-  return value
+export const normalizeCitySlug = (value?: string | null, fallback?: string) => {
+  if (!value) return fallback ?? '';
+  const slug = value
     .trim()
     .toLowerCase()
     .replace(/[\s_]+/g, '-')
     .replace(/[^a-z0-9-]/g, '')
     .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '') || DEFAULT_CITY;
+    .replace(/^-|-$/g, '');
+  return slug || (fallback ?? '');
 };
 
 export const readCookie = (name: string) => {
@@ -33,18 +34,18 @@ export const writeCookie = (name: string, value: string, maxAgeSeconds: number) 
   document.cookie = `${name}=${encodeURIComponent(value)}; Max-Age=${maxAgeSeconds}; Path=/; SameSite=Lax`;
 };
 
-export const getStoredCity = () => normalizeCitySlug(readCookie(CITY_COOKIE_NAME));
+export const getStoredCity = () => normalizeCitySlug(readCookie(CITY_COOKIE_NAME), DEFAULT_CITY);
 export const getBestStoredCity = () => getStoredLocation().city;
 
 export const saveCityLocally = (city: string) => {
-  writeCookie(CITY_COOKIE_NAME, normalizeCitySlug(city), 30 * 24 * 60 * 60);
+  writeCookie(CITY_COOKIE_NAME, normalizeCitySlug(city, DEFAULT_CITY), 30 * 24 * 60 * 60);
 };
 
 const safeParseLocation = (value?: string): LocationCache | null => {
   if (!value) return null;
   try {
     const parsed = JSON.parse(value) as Partial<LocationCache>;
-    const city = normalizeCitySlug(parsed.city);
+    const city = normalizeCitySlug(parsed.city, DEFAULT_CITY);
     const lat = Number(parsed.lat);
     const lng = Number(parsed.lng);
     return {
@@ -69,7 +70,7 @@ export const getStoredLocation = (): LocationCache => {
 
 export const saveLocationLocally = (location: LocationCache) => {
   const normalized: LocationCache = {
-    city: normalizeCitySlug(location.city),
+    city: normalizeCitySlug(location.city, DEFAULT_CITY),
     lat: location.lat,
     lng: location.lng,
   };

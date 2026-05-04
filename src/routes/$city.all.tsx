@@ -30,9 +30,9 @@ function RouteComponent() {
 
   return (
     <div className="min-h-screen">
-      <HeroSection />
+      <HeroSection city={city} />
       <div className="bg-white border-y border-slate-100">
-        <AllEventsSection events={allEvents} />
+        <AllEventsSection events={allEvents} city={city} />
       </div>
       <NewsletterSection />
       <Footer />

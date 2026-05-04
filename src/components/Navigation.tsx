@@ -110,66 +110,71 @@ export function Navigation() {
   }
 
   return (
-    <nav className="fixed top-0 z-50 w-full bg-white border-b border-slate-100 py-3 px-6">
-      <div className="max-w-[1500px] mx-auto flex items-center justify-between">
+   <nav className="fixed top-0 z-50 w-full px-6 bg-white pt-4">
+      <div className=" mx-auto flex items-center justify-between  px-6 py-2.5 rounded-2xl border-b-2">
+        
+        {/* Left: Brand & Links */}
         <div className="flex items-center gap-10">
-          <Link to="/$city/all" params={{ city: activeCity }} className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <svg viewBox="0 0 24 24" className="w-5 h-5 text-white fill-current">
+          <Link to="/$city/all" params={{ city: activeCity }} className="flex items-center gap-2 group">
+            <div className="w-8 h-8 bg-slate-900 rounded-xl flex items-center justify-center group-hover:bg-indigo-600 transition-colors duration-300">
+              <svg viewBox="0 0 24 24" className="w-4 h-4 text-white fill-current">
                 <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z" />
               </svg>
             </div>
-            <span className="text-xl font-bold tracking-tight text-foreground">EventHunt</span>
+            <span className="text-lg font-black tracking-tighter text-slate-900">EventHunt.</span>
           </Link>
 
-          <div className="hidden lg:flex items-center gap-8 text-sm font-medium text-slate-600">
-            <Link to="/$city/all" params={{ city: activeCity }} className="nav-link-active">Home</Link>
-            <Link to="/search" className="hover:text-primary transition-colors">Events</Link>
-            <Link to="/$city/all" params={{ city: activeCity }} className="hover:text-primary transition-colors">Map</Link>
-            <Link to="/$city/all" params={{ city: activeCity }} className="hover:text-primary transition-colors">About Us</Link>
+          <div className="hidden lg:flex items-center gap-6 text-[13px] font-bold uppercase tracking-wider text-slate-500">
+            <Link to="/$city/all" params={{ city: activeCity }} className="hover:text-indigo-600 transition-colors">Home</Link>
+            <Link to="/search" className="hover:text-indigo-600 transition-colors">Explore</Link>
+            <Link to="/$city/all" params={{ city: activeCity }} className="hover:text-indigo-600 transition-colors">Map</Link>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div 
+        {/* Center/Right: Actions */}
+        <div className="flex items-center gap-3">
+          {/* Location Picker - Subtle & Integrated */}
+          <button 
             onClick={() => setIsLocationDialogOpen(true)}
-            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 text-slate-600 text-xs font-medium border border-slate-100 cursor-pointer hover:bg-slate-100 transition-colors"
+            className="hidden md:flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-50 transition-all group"
           >
-            <MapPin className="w-3.5 h-3.5 text-primary" />
-            <span>{activeCity.replace(/-/g, ' ')}</span>
-            <ChevronDown className="w-3 h-3" />
-          </div>
-
-          <Link className="relative hidden xl:block" to="/search">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <div className='bg-slate-50 border border-slate-100 rounded-lg pl-10 pr-4 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all'>
-              <span>Search events, temples, places...</span>
+            <div className="p-1.5 bg-indigo-50 rounded-lg group-hover:bg-indigo-100 transition-colors">
+              <MapPin className="w-3.5 h-3.5 text-indigo-600" />
             </div>
+            <div className="text-left">
+              <p className="text-[10px] font-black uppercase text-slate-400 leading-none mb-0.5 tracking-tight">Location</p>
+              <p className="text-xs font-bold text-slate-700 leading-none capitalize">{activeCity.replace(/-/g, ' ')}</p>
+            </div>
+            <ChevronDown className="w-3 h-3 text-slate-400 ml-1" />
+          </button>
+
+          <div className="h-8 w-[1px] bg-slate-100 mx-2 hidden md:block" />
+
+          {/* Minimal Search Trigger */}
+          <Link to="/search" className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all">
+            <Search className="w-5 h-5" />
           </Link>
 
-          <Link to="/manage/create">
-            <Button className="bg-primary hover:bg-primary-hover text-white font-semibold rounded-lg px-5 py-2 shadow-sm flex items-center gap-2">
-              <Plus className="w-4 h-4" />
-              Create Event
+          {/* Primary Action */}
+          <Link to="/manage/create" className="ml-2">
+            <Button className="bg-slate-900 hover:bg-indigo-600 text-white text-xs font-black uppercase tracking-widest rounded-xl px-5 h-10 shadow-lg shadow-slate-900/10 transition-all active:scale-95">
+              <Plus className="w-4 h-4 mr-2" />
+              Create
             </Button>
           </Link>
 
-          <div className="flex items-center gap-3 pl-3 border-l border-slate-100">
-            <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors relative">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
-
+          {/* User Profile */}
+          <div className="ml-2 pl-3 border-l border-slate-100">
             {isPending ? (
-              <div className="w-9 h-9 rounded-full bg-slate-100 animate-pulse" />
+              <div className="w-9 h-9 rounded-xl bg-slate-100 animate-pulse" />
             ) : session?.user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="outline-none group">
-                    <Avatar className="w-9 h-9 border border-primary/20 group-hover:border-primary transition-colors">
-                      <AvatarImage src={session.user.image || undefined} />
-                      <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs">
-                        {session.user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                    <Avatar className="w-9 h-9 rounded-xl border-2 border-transparent group-hover:border-indigo-100 transition-all">
+                      <AvatarImage src={session.user.image || undefined} className="rounded-xl" />
+                      <AvatarFallback className="bg-indigo-50 text-indigo-600 font-bold text-xs rounded-xl">
+                        {session.user.name[0]}
                       </AvatarFallback>
                     </Avatar>
                   </button>
@@ -260,20 +265,62 @@ export function Navigation() {
         </div>
       </div>
 
-      <Dialog open={isLocationDialogOpen} onOpenChange={setIsLocationDialogOpen}>
-        <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden border-none shadow-2xl rounded-3xl">
-          <div className="bg-primary/5 p-8 text-center border-b border-primary/10">
-            <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4 border border-primary/10">
-              <MapPin className="w-8 h-8 text-primary" />
-            </div>
-            <DialogTitle className="text-2xl font-bold text-slate-900 mb-2">Set your location</DialogTitle>
-            <DialogDescription className="text-slate-500 font-medium">
-              Find the best events and activities happening near you
-            </DialogDescription>
-          </div>
+  <Dialog open={isLocationDialogOpen} onOpenChange={setIsLocationDialogOpen}>
+  <DialogContent className="sm:max-w-[340px] p-0 overflow-hidden border border-slate-200 shadow-xl rounded-2xl">
+    {/* Minimal Header */}
+    <div className="px-5 pt-5 pb-4">
+      <div className="flex items-center gap-2.5 mb-1">
+        <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+          <MapPin className="w-4 h-4 text-primary" />
+        </div>
+        <DialogTitle className="text-base font-bold text-slate-900">
+          Set Location
+        </DialogTitle>
+      </div>
+      <DialogDescription className="text-xs font-medium text-slate-500 leading-relaxed">
+        Discover the best events and activities happening near you.
+      </DialogDescription>
+    </div>
 
-          <div className="p-6 space-y-6">
+    <div className="px-5 pb-6 space-y-4">
+      {/* Manual Input with Integrated Submit */}
+      <div className="space-y-1.5">
+        <Label htmlFor="city" className="text-[10px] font-bold uppercase tracking-wider text-slate-400 ml-1">
+          City Name
+        </Label>
+        <div className="relative group">
+          <Input 
+            id="city" 
+            placeholder="Search city..." 
+            value={manualCity}
+            onChange={(e) => setManualCity(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleManualSubmit()}
+            className="h-10 rounded-xl border-slate-200 focus:border-primary bg-slate-50/50 pl-9 pr-12 text-xs font-medium transition-all"
+          />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-primary transition-colors" />
+          
+          <div className="absolute right-1 top-1/2 -translate-y-1/2">
             <Button 
+              size="sm"
+              onClick={handleManualSubmit}
+              disabled={!manualCity.trim() || isLocating}
+              className="h-8 px-3 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-bold transition-all"
+            >
+              Set
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Modern Divider */}
+      <div className="relative flex items-center py-1">
+        <div className="flex-grow border-t border-slate-100"></div>
+        <span className="flex-shrink mx-3 text-[9px] font-bold uppercase tracking-widest text-slate-300">Or</span>
+        <div className="flex-grow border-t border-slate-100"></div>
+      </div>
+
+      {/* Current Location Action */}
+     <Button 
               variant="outline" 
               className="w-full flex items-center gap-3 justify-center h-14 rounded-2xl border-slate-200 hover:border-primary hover:bg-primary/5 hover:text-primary transition-all font-bold text-slate-700"
               onClick={handleUseCurrentLocation}
@@ -286,43 +333,9 @@ export function Navigation() {
               )}
               {isLocating ? 'Determining location...' : 'Use current location'}
             </Button>
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-slate-100" />
-              </div>
-              <div className="relative flex justify-center text-[10px] uppercase tracking-widest font-black text-slate-400">
-                <span className="bg-white px-4">Or enter manually</span>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="city" className="text-xs font-bold uppercase tracking-wider text-slate-400 ml-1">City Name</Label>
-              <div className="relative group">
-                <Input 
-                  id="city" 
-                  placeholder="e.g. Mumbai, Bangalore, New York" 
-                  value={manualCity}
-                  onChange={(e) => setManualCity(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleManualSubmit()}
-                  className="h-14 rounded-2xl border-slate-200 focus:border-primary focus:ring-primary/10 bg-slate-50/50 pl-12 transition-all font-medium"
-                />
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary transition-colors" />
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter className="p-6 bg-slate-50/50 border-t border-slate-100 sm:justify-center">
-            <Button 
-              onClick={handleManualSubmit} 
-              disabled={!manualCity.trim() || isLocating}
-              className="w-full h-14 rounded-2xl bg-primary hover:bg-primary-hover text-white font-bold shadow-lg shadow-primary/20 transition-all disabled:opacity-50 disabled:shadow-none"
-            >
-              Confirm Location
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+    </div>
+  </DialogContent>
+</Dialog>
     </nav>
   )
 }

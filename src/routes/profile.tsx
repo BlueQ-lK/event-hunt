@@ -9,7 +9,8 @@ import {
   Settings, 
   Clock, 
   CalendarSync,
-  Search
+  Search,
+  ChevronRight
 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -103,174 +104,133 @@ function ProfilePage() {
   }, [session, isSessionPending])
 
   return (
-    <div className="min-h-screen bg-slate-50/50">
-      <div className="container-custom max-w-6xl">
-          <div className='flex flex-col  items-center mb-4'>
-             <Avatar className="w-24 h-24 mx-auto border-4 border-white shadow-md">
-                  <AvatarImage src={session?.user.image ?? ''} />
-                  <AvatarFallback className="bg-primary text-white text-2xl font-bold">{userAvatar}</AvatarFallback>
+    <div className="min-h-screen bg-white">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="flex flex-col md:flex-row gap-10">
+          
+          {/* Compact Sidebar Navigation */}
+          <aside className="w-full md:w-64 shrink-0">
+            <div className="flex items-center gap-3 mb-8 px-2">
+              <Avatar className="w-12 h-12 border border-slate-100 shadow-sm">
+                <AvatarImage src={session?.user.image ?? ''} />
+                <AvatarFallback className="bg-slate-900 text-white text-xs font-bold">{userAvatar}</AvatarFallback>
               </Avatar>
-              <h2 className=" text-xl font-bold text-slate-800">{userName}</h2>
-          </div>
-        <div className="flex flex-col md:flex-row gap-8">
-          {/* Main Content Area */}
-          <div className="flex-1 min-w-0">
-            <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
-              <div className=" rounded-2xl border-slate-100  mb-8 flex justify-center sticky top-20">
-                <TabsList className="bg-white shadow-sm border-none ">
-                  <TabsTrigger value="interested" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all font-bold text-sm flex gap-2 items-center">
-                    <Heart className="w-4 h-4" />
-                    Interested
-                  </TabsTrigger>
-                  <TabsTrigger value="settings" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all font-bold text-sm flex gap-2 items-center">
-                    <Settings className="w-4 h-4" />
-                    Settings
-                  </TabsTrigger>
-                  <TabsTrigger value="manage" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all font-bold text-sm flex gap-2 items-center">
-                    <BarChart3 className="w-4 h-4" />
-                    Manage Events
-                  </TabsTrigger>
-                </TabsList>
+              <div className="min-w-0">
+                <h2 className="text-sm font-bold text-slate-900 truncate">{userName}</h2>
+                <p className="text-[11px] text-slate-400 truncate">{userEmail}</p>
               </div>
+            </div>
 
-
-              {/* Interested Content */}
-              <TabsContent value="interested" className="m-0">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h3 className="text-xl font-bold text-slate-800">Events & Plans</h3>
-                    <p className="text-sm text-slate-500 font-medium">Keep track of festivals you're interested in</p>
+            <nav className="space-y-1">
+              {[
+                { id: 'interested', label: 'Interested', icon: Heart },
+                { id: 'settings', label: 'Settings', icon: Settings },
+                { id: 'manage', label: 'Manage Events', icon: BarChart3 },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => handleTabChange(item.id)}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                    tab === item.id 
+                      ? 'bg-slate-100 text-slate-900' 
+                      : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <item.icon className={`w-4 h-4 ${tab === item.id ? 'text-primary' : 'text-slate-400'}`} />
+                    {item.label}
                   </div>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <Input placeholder="Search your plans..." className="pl-9 w-64 rounded-xl border-slate-200" />
+                  {tab === item.id && <ChevronRight className="w-3 h-3 text-slate-400" />}
+                </button>
+              ))}
+            </nav>
+          </aside>
+
+          {/* Main Content: High Density */}
+          <main className="flex-1 min-w-0">
+            <Tabs value={tab} className="w-full">
+              
+              {/* Interested Events Grid */}
+              <TabsContent value="interested" className="mt-0 outline-none">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                  <h3 className="text-lg font-bold text-slate-900 tracking-tight">Your Plans</h3>
+                  <div className="relative w-full sm:w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                    <Input placeholder="Filter events..." className="pl-9 h-9 text-xs rounded-lg border-slate-200 bg-slate-50/50" />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
                   {eventsLoading ? (
-                    <div className="text-sm text-slate-500">Loading interested events...</div>
+                    <div className="col-span-full py-10 text-center text-xs text-slate-400">Loading...</div>
                   ) : interestedEvents.length === 0 ? (
-                    <div className="text-sm text-slate-500">
-                      {session ? 'No interested events yet.' : 'Login to see your interested events.'}
-                    </div>
-                  ) : interestedEvents.map(event => (
-                    <EventCard key={event.id} event={event} />
-                  ))}
+                    <div className="col-span-full py-10 text-center text-xs text-slate-400">No events found.</div>
+                  ) : (
+                    interestedEvents.map(event => <EventCard key={event.id} event={event} />)
+                  )}
                 </div>
-                {eventsError && (
-                  <p className="mt-4 text-sm text-red-600">{eventsError}</p>
-                )}
               </TabsContent>
 
-              {/* Settings Content */}
-              <TabsContent value="settings" className="m-0 space-y-6">
-                <div className="mb-6">
-                  <h3 className="text-xl font-bold text-slate-800">Account Settings</h3>
-                  <p className="text-sm text-slate-500 font-medium">Manage your preferences and connection</p>
-                </div>
-
-                {/* Communication Preferences */}
-                <Card className="border-none shadow-sm overflow-hidden">
-                  <CardHeader className="bg-slate-50/50 pb-4">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-primary" />
-                      Communication Preferences
-                    </CardTitle>
-                    <CardDescription>How you receive updates and newsletters</CardDescription>
+              {/* Settings: Sleeker Card Layout */}
+              <TabsContent value="settings" className="mt-0 space-y-6 outline-none">
+                <h3 className="text-lg font-bold text-slate-900 mb-6">Account Settings</h3>
+                
+                <Card className="border border-slate-100 shadow-none rounded-xl overflow-hidden">
+                  <CardHeader className="py-4 px-5 border-b border-slate-50">
+                    <CardTitle className="text-xs font-bold uppercase tracking-wider text-slate-400">Communication</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-6 pt-6">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div className="space-y-1">
-                        <Label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Email Address</Label>
-                        <p className="text-sm font-bold text-slate-800">{userEmail}</p>
+                  <CardContent className="p-0 divide-y divide-slate-50">
+                    <div className="flex items-center justify-between p-5">
+                      <div className="space-y-0.5">
+                        <Label className="text-xs font-bold text-slate-800">Email Address</Label>
+                        <p className="text-[11px] text-slate-500">{userEmail}</p>
                       </div>
-                      <Button variant="outline" size="sm" className="w-fit rounded-xl border-slate-200">Edit Email</Button>
+                      <Button variant="outline" size="sm" className="h-8 text-[11px] px-4 rounded-lg">Change</Button>
                     </div>
 
-                    <Separator className="bg-slate-100" />
-
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div className="space-y-1">
-                        <Label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Phone Number</Label>
-                        <p className="text-sm font-bold text-slate-800">Not set</p>
+                    <div className="flex items-center justify-between p-5">
+                      <div className="space-y-0.5">
+                        <Label className="text-xs font-bold text-slate-800">Newsletter Digest</Label>
+                        <p className="text-[11px] text-slate-500">Scheduled for {preferences.newsletterTime}</p>
                       </div>
-                      <Button variant="outline" size="sm" className="w-fit rounded-xl border-slate-200">Edit Phone</Button>
+                      <Input 
+                        type="time" 
+                        value={preferences.newsletterTime} 
+                        className="w-28 h-8 text-[11px] rounded-lg"
+                        onChange={(e) => setPreferences({...preferences, newsletterTime: e.target.value})}
+                      />
                     </div>
 
-                    <Separator className="bg-slate-100" />
-
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                           <Clock className="w-3.5 h-3.5 text-slate-400" />
-                           <Label className="text-sm font-bold text-slate-700">Preferred Newsletter Time</Label>
-                        </div>
-                        <p className="text-xs text-slate-500">When should we send your daily event digest?</p>
-                      </div>
-                      <div className="w-full md:w-32">
-                         <Input 
-                           type="time" 
-                           value={preferences.newsletterTime} 
-                           onChange={(e) => setPreferences({...preferences, newsletterTime: e.target.value})}
-                           className="rounded-xl border-slate-200" 
-                         />
-                      </div>
-                    </div>
-
-                    <Separator className="bg-slate-100" />
-
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                           <CalendarSync className="w-3.5 h-3.5 text-slate-400" />
-                           <Label className="text-sm font-bold text-slate-700">Google Calendar Sync</Label>
-                        </div>
-                        <p className="text-xs text-slate-500">Automatically add interested events to your calendar</p>
+                    <div className="flex items-center justify-between p-5">
+                      <div className="space-y-0.5">
+                        <Label className="text-xs font-bold text-slate-800">Calendar Sync</Label>
+                        <p className="text-[11px] text-slate-500">Auto-add events to Google Calendar</p>
                       </div>
                       <Switch 
                         checked={preferences.calendarSync} 
-                        onCheckedChange={(checked) => setPreferences({...preferences, calendarSync: checked})}
+                        onCheckedChange={(v) => setPreferences({...preferences, calendarSync: v})}
                       />
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* Notification Preferences */}
-                <Card className="border-none shadow-sm overflow-hidden">
-                  <CardHeader className="bg-slate-50/50 pb-4">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Bell className="w-4 h-4 text-primary" />
-                      Notification Preferences
-                    </CardTitle>
-                    <CardDescription>Control what notifications you receive</CardDescription>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-between p-4 bg-red-50 rounded-2xl border border-red-100">
-                      <div className="space-y-1">
-                        <Label className="text-sm font-bold text-red-900">Unsubscribe from all emails</Label>
-                        <p className="text-xs text-red-600">You will stop receiving all newsletters and event updates.</p>
-                      </div>
-                      <Switch 
-                        className="data-[state=checked]:bg-red-500"
-                        checked={!preferences.allEmailsSubscribed} 
-                        onCheckedChange={(checked) => setPreferences({...preferences, allEmailsSubscribed: !checked})}
-                      />
-                    </div>
-                  </CardContent>
-                  <CardFooter className="bg-slate-50/30 border-t border-slate-100 py-4 flex justify-end">
-                    <Button className="bg-primary hover:bg-primary-hover text-white rounded-xl px-8 font-bold">Save Preferences</Button>
-                  </CardFooter>
-                </Card>
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="text-xs font-bold text-slate-800">Email Notifications</Label>
+                    <p className="text-[11px] text-slate-500">Toggle all marketing and update emails</p>
+                  </div>
+                  <Switch 
+                    checked={preferences.allEmailsSubscribed}
+                    onCheckedChange={(v) => setPreferences({...preferences, allEmailsSubscribed: v})}
+                  />
+                </div>
               </TabsContent>
 
-              {/* Manage Events Content */}
-              <TabsContent value="manage" className="m-0">
+              <TabsContent value="manage" className="mt-0 outline-none">
                 <ManageEvents />
               </TabsContent>
             </Tabs>
-          </div>
-
+          </main>
         </div>
       </div>
     </div>

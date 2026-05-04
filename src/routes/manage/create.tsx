@@ -4,6 +4,7 @@ import { createEvent } from '@/server/events'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import { Editor } from '@/components/editor'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { 
@@ -16,6 +17,7 @@ import {
   Image as ImageIcon, 
   ListChecks,
   ChevronDown,
+  ChevronUp,
 } from 'lucide-react'
 import { Footer } from '@/components/Footer'
 import type { EventForm } from '@/lib/types'
@@ -49,6 +51,9 @@ function CreateEventPage() {
     category: 'other',
     bannerImage: '',
     brochure: '',
+    facebook: '',
+    instagram: '',
+    twitter: '',
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -72,12 +77,14 @@ function CreateEventPage() {
           endDate: formData.endDate || undefined,
           startTime: formData.startTime,
           endTime: formData.endTime || undefined,
-          locationName: formData.location.name || undefined,
           address: formData.location.address || undefined,
           city: formData.location.city || undefined,
           category: formData.category ?? 'other',
           bannerImage: typeof formData.bannerImage === 'string' ? formData.bannerImage || undefined : undefined,
           brochure: typeof formData.brochure === 'string' ? formData.brochure || undefined : undefined,
+          facebook: formData.facebook || undefined,
+          instagram: formData.instagram || undefined,
+          twitter: formData.twitter || undefined,
         }
       })
       navigate({ to: '/' })
@@ -89,6 +96,22 @@ function CreateEventPage() {
   }
 
   const [showEndTime, setShowEndTime] = useState(false)
+
+  const toggleTimeAMPM = (field: 'startTime' | 'endTime') => {
+    const currentValue = formData[field];
+    let hours = 12;
+    let minutes = 0;
+    
+    if (currentValue) {
+      const [h, m] = currentValue.split(':').map(Number);
+      hours = h;
+      minutes = m;
+    }
+    
+    const newHours = hours >= 12 ? hours - 12 : hours + 12;
+    const newTime = `${newHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    setFormData(prev => ({ ...prev, [field]: newTime }));
+  };
 
 
   const steps = [
@@ -103,7 +126,7 @@ function CreateEventPage() {
   ]
 
   return (
-    <div className="min-h-screen pb-40">
+    <div className="min-h-screen pb-40 px-50">
       {/* Header */}
       <header className=" py-6 px-6">
         <div className="container-custom flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -133,7 +156,7 @@ function CreateEventPage() {
       </header>
 
       <main className="container-custom">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+        <div className="">
           
           {/* Form Content (Left) */}
           <div className="lg:col-span-8 space-y-8 border p-5 rounded-lg">
@@ -155,15 +178,11 @@ function CreateEventPage() {
                 </div>
                 <div className="space-y-2 pt-2">
                   <label className="text-xs font-bold text-slate-700">Event Description <span className="text-red-500">*</span></label>
-                  <div className="relative">
-                    <Textarea 
-                      placeholder="Describe your event, its significance, and what people can expect..." 
-                      className="min-h-[150px] bg-white border-slate-200 rounded-lg focus:ring-primary/20 py-4"
-                      value={formData.description}
-                      onChange={(e) => setFormData({...formData, description: e.target.value})}
-                    />
-                    <span className="absolute right-4 bottom-[-20px] text-[10px] font-bold text-slate-400">0/1000</span>
-                  </div>
+                  <Editor 
+                    value={formData.description || ''}
+                    onChange={(html) => setFormData({...formData, description: html})}
+                    placeholder="Describe your event, its significance, and what people can expect..."
+                  />
                 </div>
               </div>
             </FormSection>
@@ -195,14 +214,36 @@ function CreateEventPage() {
                     <label className="text-[11px] font-semibold text-slate-600">
                       Start Time <span className="text-red-500">*</span>
                     </label>
-                    <div className="relative">
+                    <div className="relative flex items-center">
                       <Input 
                         type="time" 
-                        className="h-12 bg-white border-slate-200 rounded-lg pl-10" 
+                        className="h-12 bg-white border-slate-200 rounded-lg pl-10 pr-16 w-full" 
                         value={formData.startTime}
                         onChange={(e) => setFormData({...formData, startTime: e.target.value})}
                       />
                       <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <div className="absolute right-0 top-0 bottom-0 flex items-center pr-1">
+                        <div className="h-8 w-px bg-slate-100 mx-1" />
+                        <div className="flex flex-col items-center px-2">
+                          <button 
+                            type="button"
+                            onClick={() => toggleTimeAMPM('startTime')}
+                            className="text-slate-300 hover:text-primary transition-colors"
+                          >
+                            <ChevronUp className="w-3 h-3" />
+                          </button>
+                          <span className="text-[9px] font-black text-slate-500 select-none leading-tight py-0.5">
+                            {formData.startTime ? (parseInt(formData.startTime.split(':')[0]) >= 12 ? 'PM' : 'AM') : 'AM'}
+                          </span>
+                          <button 
+                            type="button"
+                            onClick={() => toggleTimeAMPM('startTime')}
+                            className="text-slate-300 hover:text-primary transition-colors"
+                          >
+                            <ChevronDown className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -252,14 +293,36 @@ function CreateEventPage() {
                       <label className="text-[11px] font-semibold text-slate-600">
                         End Time
                       </label>
-                      <div className="relative">
+                      <div className="relative flex items-center">
                         <Input 
                           type="time" 
-                          className="h-12 bg-white border-slate-200 rounded-lg pl-10" 
+                          className="h-12 bg-white border-slate-200 rounded-lg pl-10 pr-16 w-full" 
                           value={formData.endTime}
                           onChange={(e) => setFormData({...formData, endTime: e.target.value})}
                         />
                         <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <div className="absolute right-0 top-0 bottom-0 flex items-center pr-1">
+                          <div className="h-8 w-px bg-slate-100 mx-1" />
+                          <div className="flex flex-col items-center px-2">
+                            <button 
+                              type="button"
+                              onClick={() => toggleTimeAMPM('endTime')}
+                              className="text-slate-300 hover:text-primary transition-colors"
+                            >
+                              <ChevronUp className="w-3 h-3" />
+                            </button>
+                            <span className="text-[9px] font-black text-slate-500 select-none leading-tight py-0.5">
+                              {formData.endTime ? (parseInt(formData.endTime.split(':')[0]) >= 12 ? 'PM' : 'AM') : 'AM'}
+                            </span>
+                            <button 
+                              type="button"
+                              onClick={() => toggleTimeAMPM('endTime')}
+                              className="text-slate-300 hover:text-primary transition-colors"
+                            >
+                              <ChevronDown className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -272,15 +335,6 @@ function CreateEventPage() {
             {/* Step 3: Location */}
             <FormSection number={3} title="Location">
               <div className="space-y-3">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700">Location Name <span className="text-red-500">*</span></label>
-                  <Input 
-                    placeholder="Start typing location name for suggestions" 
-                    className="h-12 bg-white border-slate-200 rounded-lg" 
-                    value={formData.location.name}
-                    onChange={(e) => setFormData({...formData, location: {...formData.location, name: e.target.value}})}
-                  />
-                </div>
                 <div className="space-y-2">
                    <Textarea 
                       placeholder="Address" 
@@ -296,14 +350,6 @@ function CreateEventPage() {
                     value={formData.location.city}
                     onChange={(e) => setFormData({...formData, location: {...formData.location, city: e.target.value}})}
                   />
-                </div>
-                <div className="h-48 bg-slate-100 rounded-lg border border-slate-200 relative overflow-hidden">
-                   <img src="https://images.unsplash.com/photo-1526772662000-3f88f10405ff?auto=format&fit=crop&q=80&w=1200" alt="" className="w-full h-full object-cover opacity-40" />
-                   <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white border-4 border-white shadow-xl animate-bounce">
-                        <MapPin className="w-5 h-5" />
-                      </div>
-                   </div>
                 </div>
               </div>
             </FormSection>
@@ -335,6 +381,41 @@ function CreateEventPage() {
                       </select>
                       <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                     </div>
+                  </div>
+                </div>
+              </div>
+            </FormSection>
+
+            {/* Step 5: Social Media */}
+            <FormSection number={5} title="Social Media">
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-700">Facebook</label>
+                    <Input 
+                      placeholder="https://facebook.com/event" 
+                      className="h-12 bg-white border-slate-200 rounded-lg" 
+                      value={formData.facebook}
+                      onChange={(e) => setFormData({...formData, facebook: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-700">Instagram</label>
+                    <Input 
+                      placeholder="https://instagram.com/event" 
+                      className="h-12 bg-white border-slate-200 rounded-lg" 
+                      value={formData.instagram}
+                      onChange={(e) => setFormData({...formData, instagram: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-700">X / Twitter</label>
+                    <Input 
+                      placeholder="https://x.com/event" 
+                      className="h-12 bg-white border-slate-200 rounded-lg" 
+                      value={formData.twitter}
+                      onChange={(e) => setFormData({...formData, twitter: e.target.value})}
+                    />
                   </div>
                 </div>
               </div>
@@ -379,82 +460,6 @@ function CreateEventPage() {
         </div>
           </div>
 
-          {/* Sidebar (Right) */}
-          <aside className="lg:col-span-4 space-y-8">
-            
-            {/* Event Preview */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold text-slate-800">Event Preview</h3>
-              <Card className="bg-white border-slate-100 shadow-sm rounded-2xl overflow-hidden">
-                <div className="aspect-[16/9] bg-slate-100 flex items-center justify-center relative">
-                   <ImageIcon className="w-12 h-12 text-slate-300" />
-                   <div className="absolute top-3 right-3">
-                      <Badge className="bg-emerald-50 text-emerald-600 border-none font-black text-[8px] px-2 py-1">Draft</Badge>
-                   </div>
-                </div>
-                <CardContent className="p-6 space-y-4">
-                  <h4 className="text-lg font-black text-slate-800">
-                    {formData.title || 'Event Title'}
-                  </h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-slate-400">
-                      <Calendar className="w-3.5 h-3.5" />
-                      <span className="text-[10px] font-bold">Date & Time</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-slate-400">
-                      <MapPin className="w-3.5 h-3.5" />
-                      <span className="text-[10px] font-bold">{formData.location.name || 'Location'}</span>
-                    </div>
-                  </div>
-                  <div className="pt-4 border-t border-slate-50">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">About this event</p>
-                    <p className="text-[11px] text-slate-500 font-medium line-clamp-2 italic">
-                      {formData.description || 'Event description will appear here...'}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Progress Stepper */}
-            <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
-              <h3 className="text-sm font-bold text-slate-800 mb-6">Complete these steps</h3>
-              <div className="space-y-6">
-                {steps.map((step, idx) => (
-                  <div key={idx} className="flex items-center gap-4 group">
-                    <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-xs shrink-0 transition-all ${idx === 0 ? 'bg-primary border-primary text-white' : 'border-slate-200 text-slate-300'}`}>
-                      {idx + 1}
-                    </div>
-                    <span className={`text-xs font-bold transition-colors ${idx === 0 ? 'text-primary' : 'text-slate-400 group-hover:text-slate-600'}`}>
-                      {step}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Tips for a great event */}
-            <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-6">
-              <h3 className="text-sm font-bold text-slate-800 mb-2">Tips for a great event</h3>
-              {[
-                { icon: Info, label: 'Be Descriptive', text: 'Add clear and detailed information about your event.', color: 'bg-emerald-50 text-emerald-500' },
-                { icon: ImageIcon, label: 'Add a Banner', text: 'A high quality image attracts more attendees.', color: 'bg-indigo-50 text-indigo-500' },
-                { icon: Calendar, label: 'Include Schedule', text: 'Day-wise schedule helps people plan better.', color: 'bg-pink-50 text-pink-500' },
-                { icon: ListChecks, label: 'Choose Correct Hub', text: 'Selecting the right festival hub helps people discover your event easily.', color: 'bg-orange-50 text-orange-500' },
-              ].map((tip, idx) => (
-                <div key={idx} className="flex gap-4">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${tip.color}`}>
-                    <tip.icon className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-800 mb-1">{tip.label}</h4>
-                    <p className="text-[10px] text-slate-400 font-medium leading-relaxed">{tip.text}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-          </aside>
         </div>
       </main>
     </div>

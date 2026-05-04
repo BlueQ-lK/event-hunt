@@ -138,12 +138,14 @@ export const events = pgTable("events", {
   endDate: timestamp("end_date", { withTimezone: true }),
   startTime: time("start_time").notNull(),
   endTime: time("end_time"),
-  locationName: varchar("location_name", { length: 255 }),
   address: text("address"),
   city: varchar("city", { length: 100 }),
   category: eventCategoryEnum("category").notNull(),
   bannerImage: text("banner_image"),
   brochure: text("brochure"),
+  facebook: text("facebook"),
+  instagram: text("instagram"),
+  twitter: text("twitter"),
   createdAt: timestamp("created_at").defaultNow().notNull()
 }, (table) => ({
   userIdx: index("events_user_idx").on(table.userId),
@@ -169,6 +171,25 @@ export const eventInterests = pgTable("event_interests", {
   userIdx: index("event_interest_user_idx").on(table.userId)
 }))
 
+
+//here
+export const eventImages = pgTable("event_images", {
+  id: varchar("id", { length: 20 })
+    .primaryKey()
+    .$defaultFn(() => generateSnowflakeId()),
+  eventId: varchar("event_id", { length: 20 })
+    .notNull()
+    .references(() => events.id, { onDelete: "cascade" }),
+  url: text("url").notNull(),
+  altText: text("alt_text"),
+  displayOrder: doublePrecision("display_order").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+}, (table) => ({
+  eventIdx: index("event_images_event_idx").on(table.eventId),
+}));
+
+//
+
 // ---- RELATIONS ----
 export const eventRelations = relations(events, ({ many }) => ({
   interests: many(eventInterests),
@@ -180,3 +201,5 @@ export const eventInterestRelations = relations(eventInterests, ({ one }) => ({
     references: [events.id],
   }),
 }))
+
+

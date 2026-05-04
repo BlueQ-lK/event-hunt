@@ -2,7 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { z } from 'zod'
 import { db } from '@/db'
-import { events, eventInterests } from '@/db/schema'
+import { events, eventInterests, user } from '@/db/schema'
 import { eq, and, gte, lte, desc, asc, sql, count, or, ilike } from 'drizzle-orm'
 import { auth } from '#/lib/auth'
 
@@ -41,7 +41,6 @@ export const searchEvents = createServerFn({ method: 'GET' })
       conditions.push(
         or(
           ilike(events.title, term),
-          ilike(events.locationName, term),
           ilike(events.city, term),
           ilike(events.description, term),
         ) as any
@@ -141,13 +140,15 @@ const createEventSchema = z.object({
   endDate: z.string().optional(),
   startTime: z.string().min(1),
   endTime: z.string().optional(),
-  locationName: z.string().optional(),
   address: z.string().optional(),
   city: z.string().optional(),
   category: z
     .enum(['tech', 'music', 'sports', 'education', 'business', 'art', 'health', 'food', 'travel', 'other']),
   bannerImage: z.string().optional(),
   brochure: z.string().optional(),
+  facebook: z.string().optional(),
+  instagram: z.string().optional(),
+  twitter: z.string().optional(),
 })
 
 export type CreateEventInput = z.infer<typeof createEventSchema>
@@ -180,12 +181,14 @@ export const createEvent = createServerFn({ method: 'POST' })
         endDate: data.endDate ? new Date(data.endDate) : undefined,
         startTime: data.startTime,
         endTime: data.endTime,
-        locationName: data.locationName,
         address: data.address,
         city: data.city,
         category: data.category,
         bannerImage: data.bannerImage,
-        brochure: data.brochure
+        brochure: data.brochure,
+        facebook: data.facebook,
+        instagram: data.instagram,
+        twitter: data.twitter
       })
       .returning()
 
@@ -200,9 +203,27 @@ export const getEvents = createServerFn({ method: 'GET' })
 export const getEvent = createServerFn({ method: 'GET' })
   .inputValidator(z.string())
   .handler(async ({ data: id }) => {
-    const [event] = await db.select().from(events).where(eq(events.id, id))
-    return event
+    const [result] = await db
+      .select({
+        event: events,
+        organizer: {
+          name: user.name,
+          image: user.image
+        }
+      })
+      .from(events)
+      .leftJoin(user, eq(events.userId, user.id))
+      .where(eq(events.id, id))
+    
+    if (!result) return null;
+    
+    return {
+      ...result.event,
+      organizerName: result.organizer?.name,
+      organizerImage: result.organizer?.image
+    }
   })
+
 
 // ------- "I'm Interested" feature -------
 
@@ -274,6 +295,23 @@ export const getInterestCount = createServerFn({ method: 'GET' })
     return result.count
   })
 
+export const getInterestedUsers = createServerFn({ method: 'GET' })
+  .inputValidator(z.string())
+  .handler(async ({ data: eventId }) => {
+    const results = await db
+      .select({
+        id: user.id,
+        name: user.name,
+        image: user.image
+      })
+      .from(eventInterests)
+      .innerJoin(user, eq(eventInterests.userId, user.id))
+      .where(eq(eventInterests.eventId, eventId))
+      .limit(4)
+    
+    return results
+  })
+
 export const getTrendingEvents = createServerFn({ method: 'GET' })
   .handler(async () => {
     const now = new Date()
@@ -297,7 +335,6 @@ export const getTrendingEvents = createServerFn({ method: 'GET' })
         endDate: events.endDate,
         startTime: events.startTime,
         endTime: events.endTime,
-        locationName: events.locationName,
         address: events.address,
         city: events.city,
         category: events.category,
@@ -371,7 +408,6 @@ export const getMyManagedEvents = createServerFn({ method: 'GET' })
         endDate: events.endDate,
         startTime: events.startTime,
         endTime: events.endTime,
-        locationName: events.locationName,
         address: events.address,
         city: events.city,
         category: events.category,
@@ -399,7 +435,6 @@ export const getMyInterestedEvents = createServerFn({ method: 'GET' })
         endDate: events.endDate,
         startTime: events.startTime,
         endTime: events.endTime,
-        locationName: events.locationName,
         address: events.address,
         city: events.city,
         category: events.category,
