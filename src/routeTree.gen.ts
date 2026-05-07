@@ -10,12 +10,13 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SearchRouteImport } from './routes/search'
-import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ProfileRouteImport } from './routes/profile'
-import { Route as LoginRouteImport } from './routes/login'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ManageCreateRouteImport } from './routes/manage/create'
+import { Route as AuthSignUpRouteImport } from './routes/auth/signUp'
+import { Route as AuthSignInRouteImport } from './routes/auth/signIn'
+import { Route as AuthForgotPasswordRouteImport } from './routes/auth/forgotPassword'
 import { Route as EventSlugEventIdRouteImport } from './routes/$eventSlug.$eventId'
 import { Route as CityAllRouteImport } from './routes/$city.all'
 import { Route as ManageEditEventIdRouteImport } from './routes/manage/edit.$eventId'
@@ -26,19 +27,9 @@ const SearchRoute = SearchRouteImport.update({
   path: '/search',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HelpRoute = HelpRouteImport.update({
@@ -54,6 +45,21 @@ const IndexRoute = IndexRouteImport.update({
 const ManageCreateRoute = ManageCreateRouteImport.update({
   id: '/manage/create',
   path: '/manage/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthSignUpRoute = AuthSignUpRouteImport.update({
+  id: '/auth/signUp',
+  path: '/auth/signUp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthSignInRoute = AuthSignInRouteImport.update({
+  id: '/auth/signIn',
+  path: '/auth/signIn',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
+  id: '/auth/forgotPassword',
+  path: '/auth/forgotPassword',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EventSlugEventIdRoute = EventSlugEventIdRouteImport.update({
@@ -80,12 +86,13 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/help': typeof HelpRoute
-  '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
-  '/register': typeof RegisterRoute
   '/search': typeof SearchRoute
   '/$city/all': typeof CityAllRoute
   '/$eventSlug/$eventId': typeof EventSlugEventIdRoute
+  '/auth/forgotPassword': typeof AuthForgotPasswordRoute
+  '/auth/signIn': typeof AuthSignInRoute
+  '/auth/signUp': typeof AuthSignUpRoute
   '/manage/create': typeof ManageCreateRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/manage/edit/$eventId': typeof ManageEditEventIdRoute
@@ -93,12 +100,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/help': typeof HelpRoute
-  '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
-  '/register': typeof RegisterRoute
   '/search': typeof SearchRoute
   '/$city/all': typeof CityAllRoute
   '/$eventSlug/$eventId': typeof EventSlugEventIdRoute
+  '/auth/forgotPassword': typeof AuthForgotPasswordRoute
+  '/auth/signIn': typeof AuthSignInRoute
+  '/auth/signUp': typeof AuthSignUpRoute
   '/manage/create': typeof ManageCreateRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/manage/edit/$eventId': typeof ManageEditEventIdRoute
@@ -107,12 +115,13 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/help': typeof HelpRoute
-  '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
-  '/register': typeof RegisterRoute
   '/search': typeof SearchRoute
   '/$city/all': typeof CityAllRoute
   '/$eventSlug/$eventId': typeof EventSlugEventIdRoute
+  '/auth/forgotPassword': typeof AuthForgotPasswordRoute
+  '/auth/signIn': typeof AuthSignInRoute
+  '/auth/signUp': typeof AuthSignUpRoute
   '/manage/create': typeof ManageCreateRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/manage/edit/$eventId': typeof ManageEditEventIdRoute
@@ -122,12 +131,13 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/help'
-    | '/login'
     | '/profile'
-    | '/register'
     | '/search'
     | '/$city/all'
     | '/$eventSlug/$eventId'
+    | '/auth/forgotPassword'
+    | '/auth/signIn'
+    | '/auth/signUp'
     | '/manage/create'
     | '/api/auth/$'
     | '/manage/edit/$eventId'
@@ -135,12 +145,13 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/help'
-    | '/login'
     | '/profile'
-    | '/register'
     | '/search'
     | '/$city/all'
     | '/$eventSlug/$eventId'
+    | '/auth/forgotPassword'
+    | '/auth/signIn'
+    | '/auth/signUp'
     | '/manage/create'
     | '/api/auth/$'
     | '/manage/edit/$eventId'
@@ -148,12 +159,13 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/help'
-    | '/login'
     | '/profile'
-    | '/register'
     | '/search'
     | '/$city/all'
     | '/$eventSlug/$eventId'
+    | '/auth/forgotPassword'
+    | '/auth/signIn'
+    | '/auth/signUp'
     | '/manage/create'
     | '/api/auth/$'
     | '/manage/edit/$eventId'
@@ -162,12 +174,13 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HelpRoute: typeof HelpRoute
-  LoginRoute: typeof LoginRoute
   ProfileRoute: typeof ProfileRoute
-  RegisterRoute: typeof RegisterRoute
   SearchRoute: typeof SearchRoute
   CityAllRoute: typeof CityAllRoute
   EventSlugEventIdRoute: typeof EventSlugEventIdRoute
+  AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
+  AuthSignInRoute: typeof AuthSignInRoute
+  AuthSignUpRoute: typeof AuthSignUpRoute
   ManageCreateRoute: typeof ManageCreateRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ManageEditEventIdRoute: typeof ManageEditEventIdRoute
@@ -182,25 +195,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SearchRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/profile': {
       id: '/profile'
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/help': {
@@ -222,6 +221,27 @@ declare module '@tanstack/react-router' {
       path: '/manage/create'
       fullPath: '/manage/create'
       preLoaderRoute: typeof ManageCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/signUp': {
+      id: '/auth/signUp'
+      path: '/auth/signUp'
+      fullPath: '/auth/signUp'
+      preLoaderRoute: typeof AuthSignUpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/signIn': {
+      id: '/auth/signIn'
+      path: '/auth/signIn'
+      fullPath: '/auth/signIn'
+      preLoaderRoute: typeof AuthSignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/forgotPassword': {
+      id: '/auth/forgotPassword'
+      path: '/auth/forgotPassword'
+      fullPath: '/auth/forgotPassword'
+      preLoaderRoute: typeof AuthForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/$eventSlug/$eventId': {
@@ -258,12 +278,13 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HelpRoute: HelpRoute,
-  LoginRoute: LoginRoute,
   ProfileRoute: ProfileRoute,
-  RegisterRoute: RegisterRoute,
   SearchRoute: SearchRoute,
   CityAllRoute: CityAllRoute,
   EventSlugEventIdRoute: EventSlugEventIdRoute,
+  AuthForgotPasswordRoute: AuthForgotPasswordRoute,
+  AuthSignInRoute: AuthSignInRoute,
+  AuthSignUpRoute: AuthSignUpRoute,
   ManageCreateRoute: ManageCreateRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ManageEditEventIdRoute: ManageEditEventIdRoute,

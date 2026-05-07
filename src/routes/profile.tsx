@@ -46,7 +46,7 @@ export const Route = createFileRoute('/profile')({
   beforeLoad: async () => {
     const session = await getSession();
     if(!session){
-      throw redirect({to: "/login"})
+      throw redirect({to: "/auth/signIn"})
     }
     return { user: session.user };
   }
@@ -208,7 +208,7 @@ function ProfilePage() {
                         <Label className="text-xs font-bold text-slate-800">Email Address</Label>
                         <p className="text-[11px] text-slate-500">{userEmail}</p>
                       </div>
-                      <Button variant="outline" size="sm" className="h-8 text-[11px] px-4 rounded-lg w-fit">Change</Button>
+                      <Button variant="outline" onClick={() => navigate({ to: '/auth/forgotPassword' })} size="sm" className="h-8 text-[11px] px-4 rounded-lg w-fit">Change</Button>
                     </div>
 
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 gap-4">

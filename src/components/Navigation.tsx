@@ -55,7 +55,7 @@ export function Navigation() {
     await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
-          navigate({ to: '/login' })
+          navigate({ to: '/auth/signIn' })
         },
       },
     })
@@ -264,7 +264,7 @@ export function Navigation() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Link to="/login">
+              <Link to="/auth/signIn">
                 <Button variant="ghost" className="text-sm font-semibold">Login</Button>
               </Link>
             )}
@@ -294,7 +294,7 @@ export function Navigation() {
                 </div>
               </div>
             ) : (
-              <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
+              <Link to="/auth/signIn" onClick={() => setIsMobileMenuOpen(false)}>
                 <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-12 font-bold">
                   Sign In to EventHunt
                 </Button>

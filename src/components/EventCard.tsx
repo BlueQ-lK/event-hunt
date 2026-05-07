@@ -33,7 +33,7 @@ export function EventCard({ event }: { event: any }) {
     if (loading) return
 
     if (!session) {
-      navigate({ to: '/login' })
+      navigate({ to: '/auth/signIn' })
       return
     }
 

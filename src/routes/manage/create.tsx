@@ -10,7 +10,7 @@ export const Route = createFileRoute('/manage/create')({
     const session = await getSession();
 
     if(!session){
-      throw redirect({to: "/login"})
+      throw redirect({to: "/auth/signIn"})
     }
     return { user: session.user };
   }
@@ -21,7 +21,7 @@ function CreateEventPage() {
 
   const handleSubmit = async (data: any) => {
     await createEvent({ data })
-    navigate({ to: '/manage/events' })
+    navigate({ to: '/search' })
   }
 
   return (

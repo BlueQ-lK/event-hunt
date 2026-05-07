@@ -17,7 +17,7 @@ export const Route = createFileRoute('/manage/edit/$eventId')({
   beforeLoad: async () => {
     const session = await getSession();
     if (!session) {
-      throw redirect({ to: "/login" })
+      throw redirect({ to: "/auth/signIn" })
     }
     return { user: session.user };
   }
