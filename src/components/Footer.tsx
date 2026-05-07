@@ -17,7 +17,7 @@ export function Footer() {
               </span>
             </div>
             <p className="text-sm sm:text-base leading-relaxed font-medium max-w-sm">
-              Curating the world's finest festivals and underground experiences. Join the community and never miss a beat in the city.
+              Discover and explore top events happening around you with ease. Never miss out on the best experiences.
             </p>
           </div>
           

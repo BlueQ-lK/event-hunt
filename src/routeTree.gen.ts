@@ -18,6 +18,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ManageCreateRouteImport } from './routes/manage/create'
 import { Route as EventSlugEventIdRouteImport } from './routes/$eventSlug.$eventId'
 import { Route as CityAllRouteImport } from './routes/$city.all'
+import { Route as ManageEditEventIdRouteImport } from './routes/manage/edit.$eventId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const SearchRoute = SearchRouteImport.update({
@@ -65,6 +66,11 @@ const CityAllRoute = CityAllRouteImport.update({
   path: '/$city/all',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ManageEditEventIdRoute = ManageEditEventIdRouteImport.update({
+  id: '/manage/edit/$eventId',
+  path: '/manage/edit/$eventId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/$eventSlug/$eventId': typeof EventSlugEventIdRoute
   '/manage/create': typeof ManageCreateRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/manage/edit/$eventId': typeof ManageEditEventIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -94,6 +101,7 @@ export interface FileRoutesByTo {
   '/$eventSlug/$eventId': typeof EventSlugEventIdRoute
   '/manage/create': typeof ManageCreateRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/manage/edit/$eventId': typeof ManageEditEventIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   '/$eventSlug/$eventId': typeof EventSlugEventIdRoute
   '/manage/create': typeof ManageCreateRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/manage/edit/$eventId': typeof ManageEditEventIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
     | '/$eventSlug/$eventId'
     | '/manage/create'
     | '/api/auth/$'
+    | '/manage/edit/$eventId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/$eventSlug/$eventId'
     | '/manage/create'
     | '/api/auth/$'
+    | '/manage/edit/$eventId'
   id:
     | '__root__'
     | '/'
@@ -145,6 +156,7 @@ export interface FileRouteTypes {
     | '/$eventSlug/$eventId'
     | '/manage/create'
     | '/api/auth/$'
+    | '/manage/edit/$eventId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -158,6 +170,7 @@ export interface RootRouteChildren {
   EventSlugEventIdRoute: typeof EventSlugEventIdRoute
   ManageCreateRoute: typeof ManageCreateRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ManageEditEventIdRoute: typeof ManageEditEventIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -225,6 +238,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CityAllRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/manage/edit/$eventId': {
+      id: '/manage/edit/$eventId'
+      path: '/manage/edit/$eventId'
+      fullPath: '/manage/edit/$eventId'
+      preLoaderRoute: typeof ManageEditEventIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -246,6 +266,7 @@ const rootRouteChildren: RootRouteChildren = {
   EventSlugEventIdRoute: EventSlugEventIdRoute,
   ManageCreateRoute: ManageCreateRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ManageEditEventIdRoute: ManageEditEventIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

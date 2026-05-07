@@ -25,13 +25,9 @@ export function AllEventsSection({ events, city }: { events: any[]; city?: strin
         {/* Header DNA: High Contrast & Serif Accents */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
           <div className="max-w-xl">
-            <span className="inline-flex items-center gap-2 px-3 py-1 mb-4 text-[10px] font-black uppercase tracking-[0.2em] bg-indigo-50 text-indigo-600 rounded-full">
-              <Sparkles className="w-3 h-3" />
-              Weekly Selection
-            </span>
             
-            <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter leading-none">
-              Featured <span className="text-indigo-600 italic font-serif">Hunt</span>
+            <h2 className="capitalize text-4xl md:text-5xl text-slate-900 tracking-tighter leading-none">
+              Popular Events in <span className="text-indigo-600 italic font-serif">{cityText}</span>
             </h2>
             
             <p className="text-slate-500 font-medium mt-4 text-lg">

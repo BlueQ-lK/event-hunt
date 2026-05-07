@@ -146,6 +146,8 @@ export const events = pgTable("events", {
   facebook: text("facebook"),
   instagram: text("instagram"),
   twitter: text("twitter"),
+  latitude: doublePrecision("latitude"),
+  longitude: doublePrecision("longitude"),
   createdAt: timestamp("created_at").defaultNow().notNull()
 }, (table) => ({
   userIdx: index("events_user_idx").on(table.userId),

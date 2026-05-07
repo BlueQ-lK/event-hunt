@@ -106,3 +106,27 @@ export const fetchCityFromCoords = async (lat: number, lon: number) => {
     DEFAULT_CITY;
   return normalizeCitySlug(rawCity);
 };
+
+export const fetchCoordsFromAddress = async (address: string, city?: string) => {
+  const trimmedAddress = address.trim()
+  const trimmedCity = city?.trim()
+
+  // If we already have a full address, we don't need (and often should not add) a separate city.
+  const query = trimmedCity ? `${trimmedAddress}, ${trimmedCity}` : trimmedAddress
+  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
+  const res = await fetch(url, {
+    headers: {
+      Accept: 'application/json',
+      'User-Agent': 'EventHunt/1.0',
+    },
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  if (data && data.length > 0) {
+    return {
+      lat: parseFloat(data[0].lat),
+      lng: parseFloat(data[0].lon),
+    };
+  }
+  return null;
+};

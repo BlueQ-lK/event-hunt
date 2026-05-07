@@ -40,15 +40,15 @@ export function HeroSection({ city }: { city?: string }) {
   }
 
   return (
-    <section className="pt-32 pb-20 px-6">
+    <section className="pt-32 pb-20 px-6 ">
       <div className="max-w-4xl mx-auto text-center">
         {/* Subtle Badge */}
-        <span className="inline-block px-4 py-1.5 mb-6 text-xs font-bold tracking-widest uppercase bg-indigo-50 text-indigo-600 rounded-full">
+        <span className="inline-block px-4 py-1.5 mb-6 text-xs font-bold tracking-widest uppercase bg-indigo-50 text-indigo rounded-full">
           Discover {cityText}
         </span>
         
         <h1 className="text-5xl md:text-7xl font-tight font-black text-slate-900 mb-6 tracking-tighter">
-          Experience <span className="text-indigo-600 italic font-serif">everything.</span>
+          Experience <span className="text-indigo italic font-serif">everything.</span>
         </h1>
         
         <p className="text-lg text-slate-500 mb-12 max-w-2xl mx-auto leading-relaxed">
@@ -75,7 +75,7 @@ export function HeroSection({ city }: { city?: string }) {
               type="submit"
               className="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-600 transition-colors"
             >
-              Hunt
+              Search
             </button>
           </div>
         </form>

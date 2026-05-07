@@ -157,7 +157,7 @@ function SearchPage() {
       <section className="bg-white border-b border-slate-100 py-10 px-6">
         <div className="container-custom">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-slate-900 mb-1 text-center">Discover Events</h1>
+            <h1 className="text-3xl font-bold text-slate-900 mb-1 text-center">Discover <span className='font-serif italic text-indigo'>Events</span></h1>
             <p className="text-slate-500 font-medium text-center">Find festivals, events and cultural programs near you.</p>
           </div>
 
@@ -180,18 +180,18 @@ function SearchPage() {
             </div>
 
             {/* City input */}
-            <div className="flex-1 flex items-center bg-white rounded-2xl shadow-sm border border-slate-200 px-4 py-3.5 sm:py-4 gap-3 md:max-w-[300px] focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/5 transition-all">
+            <div className="relative flex-1 flex items-center bg-white rounded-2xl shadow-sm border border-slate-200 px-4 py-3.5 sm:py-4 gap-3 md:max-w-[300px] focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/5 transition-all">
               <MapPin className="w-5 h-5 text-indigo-500 shrink-0" />
               <input
                 type="text"
                 value={inputCity}
                 onChange={(e) => handleCityChange(e.target.value)}
-                placeholder="City (e.g. Mangalore)"
+                placeholder="City"
                 className="flex-1 bg-transparent border-none focus:outline-none text-slate-800 font-bold placeholder:text-slate-400 text-sm sm:text-base"
               />
               {inputCity && (
-                <button type="button" onClick={() => handleCityChange('')} className="p-1 hover:bg-slate-50 rounded-lg transition-colors">
-                  <X className="w-4 h-4 text-slate-400 hover:text-slate-600" />
+                <button type="button" onClick={() => handleCityChange('')} className="absolute right-4 p-1 hover:bg-yinYang-accent hover:text-white rounded-lg transition-colors">
+                  <X className="w-4 h-4" />
                 </button>
               )}
             </div>
@@ -236,9 +236,9 @@ function SearchPage() {
               onClick={() => setMobileSidebarOpen(true)}
               className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-slate-700 bg-white border border-slate-200 rounded-2xl px-5 py-3 shadow-sm active:scale-95 transition-all"
             >
-              <SlidersHorizontal className="w-4 h-4 text-indigo-600" />
+              <SlidersHorizontal className="w-4 h-4 text-indigo" />
               Filters
-              {hasActiveFilters && <div className="w-2 h-2 bg-indigo-600 rounded-full ml-1 animate-pulse" />}
+              {hasActiveFilters && <div className="w-2 h-2 bg-indigo rounded-full ml-1 animate-pulse" />}
             </button>
             <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{result.total} events found</span>
           </div>
@@ -253,7 +253,7 @@ function SearchPage() {
               <aside className="absolute right-0 top-0 bottom-0 w-[300px] bg-white shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
                 <div className="p-6 border-b border-slate-100 flex items-center justify-between">
                   <h3 className="font-black uppercase tracking-widest text-slate-900 flex items-center gap-2">
-                    <SlidersHorizontal className="w-4 h-4 text-indigo-600" />
+                    <SlidersHorizontal className="w-4 h-4 text-indigo" />
                     Filters
                   </h3>
                   <button 
@@ -275,7 +275,7 @@ function SearchPage() {
                 <div className="p-6 border-t border-slate-100 bg-slate-50">
                   <Button 
                     onClick={() => setMobileSidebarOpen(false)}
-                    className="w-full bg-slate-900 hover:bg-indigo-600 text-white font-black uppercase tracking-widest h-14 rounded-2xl shadow-lg"
+                    className="w-full bg-slate-900 hover:bg-indigo text-white font-black uppercase tracking-widest h-14 rounded-2xl shadow-lg"
                   >
                     Show {result.total} Events
                   </Button>
@@ -456,7 +456,7 @@ function FilterContent({
         {hasActiveFilters && (
           <button
             onClick={clearAll}
-            className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:opacity-80"
+            className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-indigo hover:opacity-80"
           >
             Reset <RotateCcw className="w-3 h-3" />
           </button>
@@ -477,7 +477,7 @@ function FilterContent({
                       : 'border-slate-200 group-hover:border-slate-300'}`}
                 >
                   {(dateRange ?? 'any') === opt.value && (
-                    <div className="w-2.5 h-2.5 bg-indigo-600 rounded-full" />
+                    <div className="w-2.5 h-2.5 bg-indigo rounded-full" />
                   )}
                 </div>
                 <span
@@ -511,7 +511,7 @@ function FilterContent({
               return (
                 <label key={cat.value} className="flex items-center gap-3 cursor-pointer group" onClick={toggleCat}>
                   <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all
-                    ${isChecked ? 'border-indigo-600 bg-indigo-600' : 'border-slate-200 group-hover:border-slate-300'}`}
+                    ${isChecked ? 'border-indigo-600 bg-indigo' : 'border-slate-200 group-hover:border-slate-300'}`}
                   >
                     {isChecked && (
                       <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>

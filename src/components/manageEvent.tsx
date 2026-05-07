@@ -20,6 +20,7 @@ import {
   Edit,
   Trash2,
   Eye,
+  Loader2,
 } from 'lucide-react'
 import * as React from 'react'
 import { Link } from '@tanstack/react-router'
@@ -41,7 +42,7 @@ import {
   TabsTrigger,
 } from '#/components/ui/tabs'
 import { cn } from '#/lib/utils'
-import { getMyManagedEvents } from '@/server/events'
+import { getMyManagedEvents, deleteEvent } from '@/server/events'
 import { authClient } from '#/lib/auth-client'
 
 type Event = {
@@ -81,6 +82,23 @@ export function ManageEvents() {
   const [eventsData, setEventsData] = React.useState<Event[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
   const [loadError, setLoadError] = React.useState<string | null>(null)
+  const [deletingId, setDeletingId] = React.useState<string | null>(null)
+
+  const handleDelete = async (id: string, title: string) => {
+    if (!window.confirm(`Are you sure you want to delete "${title}"?`)) {
+      return
+    }
+
+    setDeletingId(id)
+    try {
+      await deleteEvent({ data: id })
+      setEventsData((prev) => prev.filter((e) => e.id !== id))
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to delete event')
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   React.useEffect(() => {
     if (isSessionPending) return
@@ -141,12 +159,7 @@ export function ManageEvents() {
         cell: ({ row }) => (
           <div className="flex flex-col text-sm">
             <div className="flex items-center gap-1.5">
-              <Calendar className="size-3.5 text-muted-foreground" />
               <span>{formatDate(row.getValue('startDate'))}</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-muted-foreground mt-0.5">
-              <Clock className="size-3.5" />
-              <span>{row.original.startTime}</span>
             </div>
           </div>
         ),
@@ -156,7 +169,6 @@ export function ManageEvents() {
         header: 'Location',
         cell: ({ row }) => (
           <div className="flex items-center gap-1.5 text-sm">
-            <MapPin className="size-3.5 text-muted-foreground shrink-0" />
             <span className="truncate max-w-[150px]">
               {row.getValue('location')}
             </span>
@@ -179,17 +191,29 @@ export function ManageEvents() {
         header: '',
         cell: ({ row }) => (
           <div className="flex items-center justify-end gap-2">
-            <Button variant="ghost" size="icon" className="size-8">
-              <Edit className="size-4" />
+            <Button variant="ghost" size="icon" className="size-8" asChild>
+              <Link to="/manage/edit/$eventId" params={{ eventId: row.original.id }}>
+                <Edit className="size-4" />
+              </Link>
             </Button>
-            <Button variant="ghost" size="icon" className="size-8 text-destructive">
-              <Trash2 className="size-4" />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={() => handleDelete(row.original.id, row.original.title)}
+              disabled={deletingId === row.original.id}
+            >
+              {deletingId === row.original.id ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Trash2 className="size-4" />
+              )}
             </Button>
           </div>
         ),
       },
     ],
-    []
+    [deletingId]
   )
 
   const filteredData = React.useMemo(() => {
@@ -214,12 +238,12 @@ export function ManageEvents() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">Manage Events</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-yinYang-accent">Manage Events</h1>
           <p className="text-sm text-slate-500">
             Monitor and manage your hosted events and performance.
           </p>
         </div>
-        <Button asChild className="w-full sm:w-auto gap-2 rounded-xl shadow-sm">
+        <Button asChild className="w-full sm:w-auto gap-2 rounded-xl shadow-sm bg-indigo text-white">
           <Link to="/manage/create">
             <Plus className="size-4" /> Create Event
           </Link>
@@ -291,7 +315,7 @@ export function ManageEvents() {
 
       {/* Events Table Section */}
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <CardTitle>Event List</CardTitle>
             <div className="relative w-full md:w-72">
@@ -312,22 +336,22 @@ export function ManageEvents() {
             onValueChange={setActiveTab}
             className="w-full"
           >
-            <TabsList className="mb-4">
+            <TabsList className="mb-4 bg-yinYang-accent">
               <TabsTrigger value="ongoing" className="gap-2">
                 Ongoing
-                <Badge variant="secondary" className="px-1.5 py-0 h-4 min-w-[1.25rem] justify-center">
+                <Badge variant="secondary" className="px-1.5 py-0 h-4 min-w-[1.25rem] justify-center text-black">
                   {eventsData.filter((e) => e.status === 'ongoing').length}
                 </Badge>
               </TabsTrigger>
               <TabsTrigger value="upcoming" className="gap-2">
                 Upcoming
-                <Badge variant="secondary" className="px-1.5 py-0 h-4 min-w-[1.25rem] justify-center">
+                <Badge variant="secondary" className="px-1.5 py-0 h-4 min-w-[1.25rem] justify-center text-black">
                   {eventsData.filter((e) => e.status === 'upcoming').length}
                 </Badge>
               </TabsTrigger>
               <TabsTrigger value="past" className="gap-2">
                 Past
-                <Badge variant="secondary" className="px-1.5 py-0 h-4 min-w-[1.25rem] justify-center">
+                <Badge variant="secondary" className="px-1.5 py-0 h-4 min-w-[1.25rem] justify-center text-black">
                   {eventsData.filter((e) => e.status === 'past').length}
                 </Badge>
               </TabsTrigger>
@@ -427,11 +451,23 @@ export function ManageEvents() {
                           </h4>
                         </div>
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" className="size-8 text-slate-400">
-                            <Edit className="size-3.5" />
+                          <Button variant="ghost" size="icon" className="size-8 text-slate-400" asChild>
+                            <Link to="/manage/edit/$eventId" params={{ eventId: row.original.id }}>
+                              <Edit className="size-3.5" />
+                            </Link>
                           </Button>
-                          <Button variant="ghost" size="icon" className="size-8 text-destructive/70">
-                            <Trash2 className="size-3.5" />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => handleDelete(row.original.id, row.original.title)}
+                            disabled={deletingId === row.original.id}
+                          >
+                            {deletingId === row.original.id ? (
+                              <Loader2 className="size-3.5 animate-spin" />
+                            ) : (
+                              <Trash2 className="size-3.5" />
+                            )}
                           </Button>
                         </div>
                       </div>

@@ -164,7 +164,7 @@ function ProfilePage() {
               {/* Interested Events Grid */}
               <TabsContent value="interested" className="mt-0 outline-none">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                  <h3 className="text-lg font-bold text-slate-900 tracking-tight">Your Plans</h3>
+                  <h3 className="text-2xl md:text-3xl font-bold tracking-tight text-yinYang-accent">Your Plans</h3>
                   <div className="relative w-full sm:w-64">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                     <Input placeholder="Filter events..." className="pl-9 h-9 text-xs rounded-lg border-slate-200 bg-slate-50/50" />
@@ -196,10 +196,10 @@ function ProfilePage() {
 
               {/* Settings: Sleeker Card Layout */}
               <TabsContent value="settings" className="mt-0 space-y-6 outline-none">
-                <h3 className="text-lg font-bold text-slate-900 mb-6">Account Settings</h3>
+                <h3 className="text-2xl md:text-3xl font-bold tracking-tight text-yinYang-accent">Account Settings</h3>
                 
-                <Card className="border border-slate-100 shadow-none rounded-xl overflow-hidden">
-                  <CardHeader className="py-4 px-5 border-b border-slate-50">
+                <Card className="shadow-none">
+                  <CardHeader className="border-b border-slate-50">
                     <CardTitle className="text-xs font-bold uppercase tracking-wider text-slate-400">Communication</CardTitle>
                   </CardHeader>
                   <CardContent className="p-0 divide-y divide-slate-50">

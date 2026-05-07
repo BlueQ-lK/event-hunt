@@ -6,6 +6,22 @@ import { events, eventInterests, user } from '@/db/schema'
 import { eq, and, gte, lte, desc, asc, sql, count, or, ilike } from 'drizzle-orm'
 import { auth } from '#/lib/auth'
 
+const CITY_ALIASES: Record<string, string[]> = {
+  mangaluru: ['mangalore'],
+  mangalore: ['mangaluru'],
+  bengaluru: ['bangalore'],
+  bangalore: ['bengaluru'],
+}
+
+function normalizeCityForMatching(value: string) {
+  return value.trim().toLowerCase().replace(/-/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
+function getCitySearchTerms(value: string) {
+  const normalized = normalizeCityForMatching(value)
+  return Array.from(new Set([normalized, ...(CITY_ALIASES[normalized] ?? [])]))
+}
+
 // ---- Search / Filter Server Function ----
 
 export const searchEventsSchema = z.object({
@@ -86,7 +102,10 @@ export const searchEvents = createServerFn({ method: 'GET' })
 
     // City filter
     if (city && city !== 'all') {
-      conditions.push(ilike(events.city, city))
+      const terms = getCitySearchTerms(city)
+      conditions.push(
+        or(...terms.map((term) => ilike(events.city, `%${term}%`))) as any
+      )
     }
 
     // Price filter — events table has no explicit price field yet, so we use
@@ -149,6 +168,8 @@ const createEventSchema = z.object({
   facebook: z.string().optional(),
   instagram: z.string().optional(),
   twitter: z.string().optional(),
+  latitude: z.number().finite().optional(),
+  longitude: z.number().finite().optional(),
 })
 
 export type CreateEventInput = z.infer<typeof createEventSchema>
@@ -188,8 +209,54 @@ export const createEvent = createServerFn({ method: 'POST' })
         brochure: data.brochure,
         facebook: data.facebook,
         instagram: data.instagram,
-        twitter: data.twitter
+        twitter: data.twitter,
+        latitude: data.latitude,
+        longitude: data.longitude,
       })
+      .returning()
+
+    return event
+  })
+
+export const updateEvent = createServerFn({ method: 'POST' })
+  .inputValidator(z.object({
+    id: z.string(),
+    data: createEventSchema
+  }))
+  .handler(async ({ data: { id, data: eventData } }) => {
+    const session = await getSessionOrThrow()
+
+    // Ensure the event exists and belongs to the user
+    const [existing] = await db
+      .select()
+      .from(events)
+      .where(and(eq(events.id, id), eq(events.userId, session.user.id)))
+
+    if (!existing) {
+      throw new Error('Event not found or you do not have permission to update it')
+    }
+
+    const [event] = await db
+      .update(events)
+      .set({
+        title: eventData.title,
+        description: eventData.description,
+        startDate: new Date(eventData.startDate),
+        endDate: eventData.endDate ? new Date(eventData.endDate) : undefined,
+        startTime: eventData.startTime,
+        endTime: eventData.endTime,
+        address: eventData.address,
+        city: eventData.city,
+        category: eventData.category,
+        bannerImage: eventData.bannerImage,
+        brochure: eventData.brochure,
+        facebook: eventData.facebook,
+        instagram: eventData.instagram,
+        twitter: eventData.twitter,
+        latitude: eventData.latitude,
+        longitude: eventData.longitude,
+      })
+      .where(eq(events.id, id))
       .returning()
 
     return event
@@ -385,13 +452,15 @@ export const getAllEvents = createServerFn({ method: 'GET' })
 export const getEventsByCity = createServerFn({ method: 'GET' })
   .inputValidator(z.object({ city: z.string().min(1), limit: z.number().optional() }))
   .handler(async ({ data }) => {
-    const normalized = data.city.trim().toLowerCase().replace(/-/g, ' ')
+    const terms = getCitySearchTerms(data.city)
+    const cityCondition = or(...terms.map((term) => ilike(events.city, `%${term}%`))) as any
+
     const rows = await db
       .select()
       .from(events)
-      .where(ilike(events.city, normalized))
+      .where(cityCondition)
       .orderBy(desc(events.createdAt))
-      .limit(data.limit ?? 24)
+      .limit(data.limit ?? 100)
 
     return rows
   })
@@ -446,4 +515,59 @@ export const getMyInterestedEvents = createServerFn({ method: 'GET' })
       .innerJoin(events, eq(events.id, eventInterests.eventId))
       .where(eq(eventInterests.userId, session.user.id))
       .orderBy(desc(eventInterests.createdAt))
+  })
+
+export const getNearbyEvents = createServerFn({ method: 'GET' })
+  .inputValidator(z.object({ 
+    lat: z.number().finite(), 
+    lng: z.number().finite(), 
+    radiusKm: z.number().optional().default(100) 
+  }))
+  .handler(async ({ data }) => {
+    const { lat, lng, radiusKm } = data
+
+    // Approximate distance in km using SQL (Haversine formula approximation)
+    const eventsWithDistance = await db
+      .select({
+        event: events,
+        distance: sql<number>`(
+          6371 * acos(
+            cos(radians(${lat})) * cos(radians(${events.latitude})) *
+            cos(radians(${events.longitude}) - radians(${lng})) +
+            sin(radians(${lat})) * sin(radians(${events.latitude}))
+          )
+        )`.as('distance')
+      })
+      .from(events)
+      .where(sql`${events.latitude} IS NOT NULL AND ${events.longitude} IS NOT NULL`)
+      .orderBy(sql`distance`)
+      .limit(500)
+
+    // Filter by radius and return
+    return eventsWithDistance
+      .filter(row => row.distance <= radiusKm)
+      .map(row => ({
+        ...row.event,
+        distance: row.distance
+      }))
+  })
+
+export const deleteEvent = createServerFn({ method: 'POST' })
+  .inputValidator(z.string())
+  .handler(async ({ data: id }) => {
+    const session = await getSessionOrThrow()
+
+    // Ensure the event exists and belongs to the user
+    const [event] = await db
+      .select()
+      .from(events)
+      .where(and(eq(events.id, id), eq(events.userId, session.user.id)))
+
+    if (!event) {
+      throw new Error('Event not found or you do not have permission to delete it')
+    }
+
+    await db.delete(events).where(eq(events.id, id))
+
+    return { success: true }
   })

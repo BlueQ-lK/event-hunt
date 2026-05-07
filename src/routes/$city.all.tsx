@@ -10,7 +10,7 @@ import { useEffect } from 'react'
 export const Route = createFileRoute('/$city/all')({
   loader: async ({ params }) => {
     const city = normalizeCitySlug(params.city)
-    const allEvents = await getEventsByCity({ data: { city, limit: 24 } })
+    const allEvents = await getEventsByCity({ data: { city, limit: 100 } })
     return { allEvents, city }
   },
   component: RouteComponent,
